@@ -97,16 +97,7 @@
   const tierFor = share => D.TIERS.find(t => share < t.max);
   const tierById = id => D.TIERS.find(t => t.id === id) || D.WIDE;
 
-  function stopFor(km) {
-    let s = D.STOPS[0];
-    for (const st of D.STOPS) if (km >= st.km) s = st;
-    return s;
-  }
-  function nextStop(km) {
-    return D.STOPS.find(st => st.km > km) || null;
-  }
-
-  const api = { QBY, EBY, irishDate, dayNumber, questionsFor, identify, shares, tierFor, tierById, stopFor, nextStop, norm };
+  const api = { QBY, EBY, irishDate, dayNumber, questionsFor, identify, shares, tierFor, tierById, norm, seeded };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PuckoutLogic = api;
 })(typeof window !== "undefined" ? window : globalThis);

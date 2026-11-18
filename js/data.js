@@ -125,34 +125,26 @@
       a: { wicklow: 15, leitrim: 15, fermanagh: 15, carlow: 12, longford: 10, sligo: 10, westmeath: 8, monaghan: 8, antrim: 7 } }
   ];
 
-  // Rarer answers travel further. `max` is the upper bound on share (exclusive).
+  // Rarer answers travel further. `pts` is how far along the road (out of
+  // CONFIG.maxPoints) the answer carries you. `max` is the upper bound on share.
   const TIERS = [
-    { id: "allstar", name: "All-Star", km: 100, max: 0.03, mark: "⭐" },
-    { id: "county", name: "Inter-county", km: 70, max: 0.07, mark: "🟩" },
-    { id: "senior", name: "Senior", km: 45, max: 0.15, mark: "🟨" },
-    { id: "inter", name: "Intermediate", km: 25, max: 0.30, mark: "🟧" },
-    { id: "junior", name: "Junior", km: 10, max: Infinity, mark: "⬜" }
+    { id: "allstar", name: "All-Star", pts: 100, max: 0.03, mark: "⭐" },
+    { id: "county", name: "Inter-county", pts: 70, max: 0.07, mark: "🟩" },
+    { id: "senior", name: "Senior", pts: 45, max: 0.15, mark: "🟨" },
+    { id: "inter", name: "Intermediate", pts: 25, max: 0.30, mark: "🟧" },
+    { id: "junior", name: "Junior", pts: 10, max: Infinity, mark: "⬜" }
   ];
-  const WIDE = { id: "wide", name: "Wide", km: 0, mark: "❌" };
-
-  // Seven All-Star answers is exactly the road's length: Croke Park.
-  const STOPS = [
-    { km: 0, name: "Your club pitch", kind: "club" },
-    { km: 120, name: "Divisional final", kind: "parish" },
-    { km: 250, name: "County final", kind: "county" },
-    { km: 400, name: "Provincial final", kind: "province" },
-    { km: 550, name: "All-Ireland quarter-final", kind: "semi" },
-    { km: 700, name: "Croke Park", kind: "croker" }
-  ];
+  const WIDE = { id: "wide", name: "Wide", pts: 0, mark: "❌" };
 
   const CONFIG = {
     perDay: 7,
+    maxPoints: 700, // seven All-Star answers: all the way to Croke Park
     secondsPerQuestion: 30,
     priorWeight: 60, // starting estimates count as this many answers per question
     launchDate: "2026-11-18" // day #1
   };
 
-  const api = { ENTITIES, QUESTIONS, TIERS, WIDE, STOPS, CONFIG };
+  const api = { ENTITIES, QUESTIONS, TIERS, WIDE, CONFIG };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PuckoutData = api;
 })(typeof window !== "undefined" ? window : globalThis);

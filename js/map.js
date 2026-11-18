@@ -1,36 +1,24 @@
 /*
- * The road map: a hand-drawn-looking stretch of countryside, generated once
- * from a fixed seed, with the road running from your club pitch to Croke Park.
- * The countryside is painted to an offscreen canvas; each frame just copies
- * the visible window, draws the stretch of road travelled and moves the pin.
+ * The map: a cartoon Ireland drawn from real outlines. Counties, loughs, the
+ * Shannon, mountains, towns, county grounds, legends' clubs and landmarks are
+ * painted once to an offscreen canvas. Each frame copies the visible window,
+ * draws today's road and the stretch travelled, and places the signs and pin.
  */
 (function (root) {
   "use strict";
-  // OY pads the countryside above and below the road so the camera can keep
-  // the pin clear of the cards at both ends of the journey.
-  const OY = 260, W = 1400, H = 2000 + OY + 700;
-  const COLORS = {
-    meadow: "#b7cc8f",
-    fields: ["#a9c47f", "#b5cc8a", "#9fbd76", "#c2d49a", "#b8c98a", "#a4bf7c", "#bccf8e"],
-    stubble: "#d9cf98",
-    hedge: "#7f9a59",
-    water: "#b9d0d2",
-    waterEdge: "#97b8bb",
-    roadEdge: "#c8b78b",
-    road: "#eee4c6",
-    trail: "#e6a817",
-    tree: ["#6f8a3a", "#7d9443", "#5f7a33", "#879b48"],
-    conifer: "#456341",
-    pitch: "#5e9c4c", pitchStripe: "#6aa857", line: "#f7f7f2",
-    stand: "#a6abaa", standRoof: "#7b8382", terrace: "#b5ab92",
-    wall: "#f4f0e4", thatch: "#e2b764", slate: "#646b70"
-  };
+  const LON0 = -10.75, LAT0 = 55.5, KX = Math.cos(53.4 * Math.PI / 180), K = 560, PAD = 60;
+  const W = Math.round(5.5 * KX * K + PAD * 2), H = Math.round(4.2 * K + PAD * 2);
+  const proj = (lat, lon) => ({ x: (lon - LON0) * KX * K + PAD, y: (LAT0 - lat) * K + PAD });
 
-  // Road control points, bottom-left (club) to top-right (Croke Park).
-  const CTRL = [[220, 1930], [250, 1780], [420, 1660], [380, 1500], [560, 1400], [760, 1440], [910, 1300],
-    [830, 1130], [630, 1050], [560, 880], [720, 760], [930, 720], [1070, 600], [990, 450], [1110, 330]].map(([x, y]) => [x, y + OY]);
-  const CROKER = { x: 1165, y: 185 + OY, rx: 175, ry: 125 };
-  const LAKES = [{ x: 210, y: 1060 + OY, r: 150 }, { x: 1180, y: 1520 + OY, r: 125 }];
+  const COL = {
+    sea: "#a9cbd0", seaLine: "rgba(255,255,255,.45)", surf: "rgba(255,255,255,.55)", shelf: "#bcd8db",
+    land: "#c2d49a", fields: ["#b8cd8b", "#c4d69c", "#adc581", "#c9d9a3", "#bfd293", "#b3c986"], stubble: "#d9d09b",
+    hedge: "rgba(110,140,80,.45)", tints: ["#e9d98a", "#9fc27a", "#d8b77a", "#86b38a", "#c9c27e", "#a8c98b"],
+    border: "#5b7743", lake: "#b7d5d9", lakeEdge: "#8db3b8", river: "#9fc4ca",
+    tree: ["#6f8a3a", "#7d9443", "#5f7a33", "#879b48"], mountain: "#9a8f7a", mountainDark: "#7d7360", snow: "#f4f2ea",
+    county: "rgba(36,58,34,.30)", town: "#2d3a33", brown: "#6e4426", green: "#00693b",
+    road: "#f4ecd2", roadEdge: "#b9a77a", trail: "#e6a817"
+  };
 
   function rng(seed) {
     let a = seed >>> 0;
@@ -41,282 +29,220 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-
-  // Catmull-Rom through the control points, then arc-length table.
-  function buildRoad() {
-    const pts = [];
-    const P = [CTRL[0]].concat(CTRL, [CTRL[CTRL.length - 1]]);
-    for (let i = 1; i < P.length - 2; i++) {
-      const [p0, p1, p2, p3] = [P[i - 1], P[i], P[i + 1], P[i + 2]];
-      for (let s = 0; s < 24; s++) {
-        const t = s / 24, t2 = t * t, t3 = t2 * t;
-        const f = (a, b, c, d) => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
-        pts.push({ x: f(p0[0], p1[0], p2[0], p3[0]), y: f(p0[1], p1[1], p2[1], p3[1]) });
-      }
+  function ringPath(rings, path = new Path2D()) {
+    rings.forEach(r => {
+      r.forEach(([lon, lat], i) => { const p = proj(lat, lon); i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y); });
+      path.closePath();
+    });
+    return path;
+  }
+  function centroid(ring) {
+    let a = 0, cx = 0, cy = 0;
+    const pts = ring.map(([lon, lat]) => proj(lat, lon));
+    for (let i = 0; i < pts.length - 1; i++) {
+      const f = pts[i].x * pts[i + 1].y - pts[i + 1].x * pts[i].y;
+      a += f; cx += (pts[i].x + pts[i + 1].x) * f; cy += (pts[i].y + pts[i + 1].y) * f;
     }
-    pts.push({ x: CTRL[CTRL.length - 1][0], y: CTRL[CTRL.length - 1][1] });
-    let L = 0;
-    pts[0].d = 0;
-    for (let i = 1; i < pts.length; i++) { L += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); pts[i].d = L; }
-    return { pts, length: L };
+    return { x: cx / (3 * a), y: cy / (3 * a) };
   }
-  const ROAD = buildRoad();
+  const area = ring => { let a = 0; for (let i = 0; i < ring.length - 1; i++) a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]; return Math.abs(a / 2); };
 
-  function pointAt(dist) {
-    const p = ROAD.pts;
-    dist = Math.max(0, Math.min(ROAD.length, dist));
-    let lo = 0, hi = p.length - 1;
-    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (p[m].d < dist) lo = m; else hi = m; }
-    const a = p[lo], b = p[hi], t = (dist - a.d) / ((b.d - a.d) || 1);
-    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, angle: Math.atan2(b.y - a.y, b.x - a.x), i: lo };
-  }
+  // Nudges for county names whose centre of mass sits badly.
+  const LABEL_NUDGE = { Down: [0.02, -0.12], Galway: [0.1, -0.05], Donegal: [-0.15, 0.1], Cork: [0, 0.05], Mayo: [0.15, 0], Dublin: [0, -0.02], Kerry: [0.1, 0.05] };
 
-  let maxKm = 700;
-  const kmToDist = km => ROAD.length * (0.03 + 0.95 * Math.max(0, Math.min(1, km / maxKm)));
-
-  function distToRoad(x, y) {
-    let m = Infinity;
-    for (let i = 0; i < ROAD.pts.length; i += 2) {
-      const p = ROAD.pts[i];
-      const d = (p.x - x) ** 2 + (p.y - y) ** 2;
-      if (d < m) m = d;
-    }
-    return Math.sqrt(m);
-  }
-
-  // ---------- Painting the countryside ----------
-  function paintWorld(R, stops) {
+  // ---------------------------------------------------------- painting
+  function paint(R, geo, pois, mountains, croker) {
     const cv = document.createElement("canvas");
     cv.width = Math.round(W * R); cv.height = Math.round(H * R);
     const g = cv.getContext("2d");
     g.scale(R, R);
-    const rnd = rng(20261118);
-    const pick = arr => arr[Math.floor(rnd() * arr.length)];
+    const rnd = rng(1884);
+    const pick = a => a[Math.floor(rnd() * a.length)];
+    const land = ringPath(geo.land);
+    const lakes = new Path2D();
+    geo.lakes.forEach(l => ringPath(l.rings, lakes));
+    const onLand = (x, y) => g.isPointInPath(land, x * R, y * R) && !g.isPointInPath(lakes, x * R, y * R);
 
-    g.fillStyle = COLORS.meadow; g.fillRect(0, 0, W, H);
-
-    // Patchwork fields on a jittered lattice
-    const S = 92, cols = Math.ceil(W / S) + 2, rows = Math.ceil(H / S) + 2;
-    const lat = [];
-    for (let i = 0; i < cols; i++) {
-      lat[i] = [];
-      for (let j = 0; j < rows; j++) lat[i][j] = { x: (i - 0.5) * S + (rnd() - 0.5) * 50, y: (j - 0.5) * S + (rnd() - 0.5) * 50 };
+    // Sea, with a shallow shelf and wave marks
+    g.fillStyle = COL.sea; g.fillRect(0, 0, W, H);
+    g.lineJoin = "round"; g.lineCap = "round";
+    g.strokeStyle = COL.shelf; g.lineWidth = 34; g.stroke(land);
+    g.strokeStyle = COL.surf; g.lineWidth = 12; g.stroke(land);
+    g.strokeStyle = COL.seaLine; g.lineWidth = 1.6;
+    for (let n = 0; n < 700; n++) {
+      const x = rnd() * W, y = rnd() * H;
+      if (g.isPointInPath(land, x * R, y * R)) continue;
+      g.beginPath(); g.moveTo(x - 8, y); g.quadraticCurveTo(x - 4, y - 4, x, y); g.quadraticCurveTo(x + 4, y + 4, x + 8, y); g.stroke();
     }
-    g.lineJoin = "round";
+
+    // Land: patchwork fields, county tints, hedges
+    g.fillStyle = COL.land; g.fill(land);
+    g.save(); g.clip(land);
+    const S = 24, cols = Math.ceil(W / S) + 2, rows = Math.ceil(H / S) + 2, lat = [];
+    for (let i = 0; i < cols; i++) { lat[i] = []; for (let j = 0; j < rows; j++) lat[i][j] = { x: (i - 0.5) * S + (rnd() - 0.5) * 14, y: (j - 0.5) * S + (rnd() - 0.5) * 14 }; }
+    g.lineWidth = 0.8; g.strokeStyle = COL.hedge;
     for (let i = 0; i < cols - 1; i++) for (let j = 0; j < rows - 1; j++) {
       const q = [lat[i][j], lat[i + 1][j], lat[i + 1][j + 1], lat[i][j + 1]];
       g.beginPath(); q.forEach((p, k) => k ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath();
-      g.fillStyle = rnd() < 0.08 ? COLORS.stubble : pick(COLORS.fields);
-      g.fill();
-      if (rnd() < 0.3) { // mowing lines
-        g.save(); g.clip();
-        g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = 3;
-        const ang = rnd() * Math.PI, cx = (q[0].x + q[2].x) / 2, cy = (q[0].y + q[2].y) / 2;
-        for (let k = -70; k <= 70; k += 9) {
-          g.beginPath();
-          g.moveTo(cx + Math.cos(ang) * -80 - Math.sin(ang) * k, cy + Math.sin(ang) * -80 + Math.cos(ang) * k);
-          g.lineTo(cx + Math.cos(ang) * 80 - Math.sin(ang) * k, cy + Math.sin(ang) * 80 + Math.cos(ang) * k);
-          g.stroke();
+      g.fillStyle = rnd() < 0.06 ? COL.stubble : pick(COL.fields); g.fill(); g.stroke();
+    }
+    geo.counties.forEach((c, i) => {
+      g.globalAlpha = 0.16; g.fillStyle = COL.tints[(i * 7) % COL.tints.length]; g.fill(ringPath(c.rings)); g.globalAlpha = 1;
+    });
+    // County borders: soft halo then a dashed line
+    geo.counties.forEach(c => {
+      const p = ringPath(c.rings);
+      g.setLineDash([]); g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 4; g.stroke(p);
+      g.setLineDash([6, 4]); g.strokeStyle = COL.border; g.lineWidth = 1.6; g.stroke(p);
+    });
+    g.setLineDash([]);
+    g.restore();
+    g.strokeStyle = "#7f9a63"; g.lineWidth = 1.5; g.stroke(land);
+
+    // Rivers and loughs
+    g.strokeStyle = COL.river; g.lineWidth = 3;
+    geo.rivers.forEach(r => { g.beginPath(); r.line.forEach(([lon, la], i) => { const p = proj(la, lon); i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); }); g.stroke(); });
+    g.fillStyle = COL.lake; g.fill(lakes);
+    g.strokeStyle = COL.lakeEdge; g.lineWidth = 1.4; g.stroke(lakes);
+
+    // Mountains
+    mountains.forEach(([la, lo, size]) => {
+      const c = proj(la, lo);
+      const n = size + 1;
+      for (let k = 0; k < n; k++) {
+        const h = (14 + size * 5) * (k === Math.floor(n / 2) ? 1 : 0.72), w = h * 1.1;
+        const x = c.x + (k - (n - 1) / 2) * w * 0.62, y = c.y + (k === Math.floor(n / 2) ? 0 : 3);
+        g.fillStyle = "rgba(60,60,40,.18)"; g.beginPath(); g.ellipse(x + 3, y + 2, w * 0.55, 3, 0, 0, Math.PI * 2); g.fill();
+        g.fillStyle = COL.mountain; g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x, y - h); g.lineTo(x + w / 2, y); g.closePath(); g.fill();
+        g.fillStyle = COL.mountainDark; g.beginPath(); g.moveTo(x, y - h); g.lineTo(x + w / 2, y); g.lineTo(x + w * 0.1, y); g.closePath(); g.fill();
+        g.fillStyle = COL.snow; g.beginPath(); g.moveTo(x - w * 0.16, y - h * 0.68); g.lineTo(x, y - h); g.lineTo(x + w * 0.16, y - h * 0.68); g.lineTo(x + w * 0.05, y - h * 0.62); g.lineTo(x - w * 0.04, y - h * 0.7); g.closePath(); g.fill();
+      }
+    });
+
+    // Trees
+    const trees = [];
+    for (let n = 0; n < 5200; n++) {
+      const x = rnd() * W, y = rnd() * H;
+      if (onLand(x, y)) trees.push({ x, y, r: 2.6 + rnd() * 3.2, c: pick(COL.tree), con: rnd() < 0.15 });
+    }
+    trees.sort((a, b) => a.y - b.y).forEach(t => {
+      g.fillStyle = "rgba(48,66,26,.25)"; g.beginPath(); g.ellipse(t.x + 1.2, t.y + 1.4, t.r, t.r * 0.6, 0, 0, Math.PI * 2); g.fill();
+      if (t.con) { g.fillStyle = "#456341"; g.beginPath(); g.moveTo(t.x, t.y - t.r * 2.2); g.lineTo(t.x + t.r * 0.8, t.y + 1); g.lineTo(t.x - t.r * 0.8, t.y + 1); g.closePath(); g.fill(); }
+      else { g.fillStyle = t.c; g.beginPath(); g.arc(t.x, t.y - t.r * 0.3, t.r, 0, Math.PI * 2); g.fill(); }
+    });
+
+    // County names
+    g.textAlign = "center"; g.textBaseline = "middle";
+    geo.counties.forEach(c => {
+      const big = c.rings.reduce((a, b) => area(b) > area(a) ? b : a);
+      const ctr = centroid(big), nudge = LABEL_NUDGE[c.name] || [0, 0];
+      const x = ctr.x + nudge[0] * KX * K, y = ctr.y - nudge[1] * K;
+      g.font = `700 21px "Fraunces", Georgia, serif`;
+      g.fillStyle = COL.county;
+      const text = c.name.toUpperCase().split("").join(" ");
+      g.fillText(text, x, y);
+    });
+
+    // Labels placed greedily so they don't collide
+    const boxes = [];
+    const free = b => !boxes.some(o => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
+    const label = (text, x, y, font, color, dx = 7) => {
+      g.font = font;
+      const w = g.measureText(text).width, h = parseInt(font.match(/(\d+)px/)[1], 10);
+      for (const [ox, align] of [[dx, "left"], [-dx, "right"]]) {
+        const bx = align === "left" ? x + ox : x + ox - w;
+        const b = { x: bx - 2, y: y - h / 2 - 2, w: w + 4, h: h + 4 };
+        if (free(b)) {
+          boxes.push(b);
+          g.textAlign = align; g.lineWidth = 3; g.strokeStyle = "rgba(246,248,241,.85)"; g.strokeText(text, x + ox, y);
+          g.fillStyle = color; g.fillText(text, x + ox, y);
+          return true;
         }
-        g.restore();
       }
-      g.strokeStyle = COLORS.hedge; g.lineWidth = 3.2; g.stroke();
-    }
-
-    // Loughs and a river
-    const blob = (cx, cy, r) => {
-      g.beginPath();
-      for (let k = 0; k <= 28; k++) {
-        const a = (k / 28) * Math.PI * 2, rr = r * (0.82 + 0.18 * Math.sin(a * 3 + cx) + (k % 28 === 0 ? 0 : 0));
-        const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * 0.8;
-        k ? g.lineTo(x, y) : g.moveTo(x, y);
-      }
-      g.closePath();
+      return false;
     };
-    g.lineCap = "round";
-    g.save(); g.translate(0, OY);
-    g.strokeStyle = COLORS.waterEdge; g.lineWidth = 30;
-    g.beginPath(); g.moveTo(-20, 1260); g.bezierCurveTo(80, 1220, 120, 1150, 190, 1100); g.stroke();
-    g.beginPath(); g.moveTo(1420, 1700); g.bezierCurveTo(1300, 1660, 1230, 1600, 1190, 1540); g.stroke();
-    g.strokeStyle = COLORS.water; g.lineWidth = 22;
-    g.beginPath(); g.moveTo(-20, 1260); g.bezierCurveTo(80, 1220, 120, 1150, 190, 1100); g.stroke();
-    g.beginPath(); g.moveTo(1420, 1700); g.bezierCurveTo(1300, 1660, 1230, 1600, 1190, 1540); g.stroke();
-    g.restore();
-    LAKES.forEach(l => {
-      blob(l.x, l.y, l.r + 6); g.fillStyle = COLORS.waterEdge; g.fill();
-      blob(l.x, l.y, l.r); g.fillStyle = COLORS.water; g.fill();
-      g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 2;
-      for (let k = 0; k < 7; k++) { // ripples
-        const x = l.x + (rnd() - 0.5) * l.r, y = l.y + (rnd() - 0.5) * l.r * 0.8;
-        g.beginPath(); g.moveTo(x - 9, y); g.quadraticCurveTo(x - 4, y - 4, x, y); g.quadraticCurveTo(x + 4, y + 4, x + 9, y); g.stroke();
+
+    // Croke Park, drawn big
+    const ck = proj(croker.lat, croker.lon);
+    drawStadium(g, ck.x, ck.y, 26, 19);
+    boxes.push({ x: ck.x - 30, y: ck.y - 22, w: 60, h: 44 });
+    label("Croke Park", ck.x, ck.y + 30, `800 13px "Overpass", system-ui, sans-serif`, COL.green, 0);
+
+    // Places you can pass
+    pois.forEach(p => {
+      const c = proj(p.lat, p.lon);
+      if (p.kind === "ground") drawStadium(g, c.x, c.y, 7, 5);
+      else if (p.kind === "legend") drawPitch(g, c.x, c.y);
+      else drawHeritage(g, c.x, c.y);
+      boxes.push({ x: c.x - 7, y: c.y - 7, w: 14, h: 14 });
+    });
+    pois.forEach(p => {
+      const c = proj(p.lat, p.lon);
+      label(p.name, c.x, c.y, `700 10px "Overpass", system-ui, sans-serif`, p.kind === "landmark" ? COL.brown : "#1f4d33");
+    });
+
+    // Towns
+    g.textBaseline = "middle";
+    geo.towns.slice().sort((a, b) => b.size - a.size).forEach(t => {
+      const c = proj(t.lat, t.lon);
+      const font = t.size === 3 ? `800 14px "Overpass", system-ui, sans-serif` : t.size === 2 ? `700 11.5px "Overpass", system-ui, sans-serif` : `600 10px "Overpass", system-ui, sans-serif`;
+      if (label(t.name, c.x, c.y, font, COL.town, t.size === 3 ? 8 : 6)) {
+        g.fillStyle = "#fff"; g.strokeStyle = COL.town; g.lineWidth = 1.5;
+        g.beginPath(); g.arc(c.x, c.y, t.size === 3 ? 4 : 2.6, 0, Math.PI * 2); g.fill(); g.stroke();
       }
     });
-
-    // The road
-    const roadPath = () => { g.beginPath(); ROAD.pts.forEach((p, k) => k ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); };
-    g.lineJoin = "round"; g.lineCap = "round";
-    roadPath(); g.strokeStyle = COLORS.roadEdge; g.lineWidth = 30; g.stroke();
-    roadPath(); g.strokeStyle = COLORS.road; g.lineWidth = 23; g.stroke();
-
-    // Grounds along the road
-    const venues = stops.map((st, i) => {
-      if (st.kind === "croker") return { x: CROKER.x, y: CROKER.y, r: 210, st };
-      const p = pointAt(kmToDist(st.km));
-      const side = i % 2 ? 1 : -1;
-      const off = 105;
-      return { x: p.x - Math.sin(p.angle) * off * side, y: p.y + Math.cos(p.angle) * off * side, r: 120, angle: p.angle, st };
-    });
-    venues.forEach(v => drawVenue(g, v, rnd));
-
-    // Scatter: trees, cottages, sheep, haystacks — kept off the road, water and grounds
-    const clear = (x, y, pad) => {
-      if (distToRoad(x, y) < 26 + pad) return false;
-      if (LAKES.some(l => Math.hypot(x - l.x, (y - l.y) / 0.8) < l.r + pad)) return false;
-      if (venues.some(v => Math.hypot(x - v.x, y - v.y) < v.r + pad * 0.5)) return false;
-      if (Math.hypot(x - CROKER.x, y - CROKER.y) < 230) return false;
-      return true;
-    };
-    const items = [];
-    // trees cluster along hedgerows: sample near lattice edges
-    for (let n = 0; n < 1100; n++) {
-      const i = Math.floor(rnd() * (cols - 1)), j = Math.floor(rnd() * (rows - 1));
-      const a = lat[i][j], b = rnd() < 0.5 ? lat[i + 1][j] : lat[i][j + 1], t = rnd();
-      const x = a.x + (b.x - a.x) * t + (rnd() - 0.5) * 10, y = a.y + (b.y - a.y) * t + (rnd() - 0.5) * 10;
-      if (x < -10 || y < -10 || x > W + 10 || y > H + 10 || !clear(x, y, 12)) continue;
-      items.push({ type: rnd() < 0.14 ? "conifer" : "tree", x, y, r: 7 + rnd() * 9, c: pick(COLORS.tree) });
-    }
-    for (let n = 0; n < 70; n++) {
-      const x = rnd() * W, y = rnd() * H;
-      if (clear(x, y, 22)) items.push({ type: "house", x, y, roof: rnd() < 0.6 ? COLORS.thatch : COLORS.slate, a: (rnd() - 0.5) * 0.5 });
-    }
-    for (let n = 0; n < 160; n++) {
-      const x = rnd() * W, y = rnd() * H;
-      if (clear(x, y, 8)) items.push({ type: rnd() < 0.25 ? "hay" : "sheep", x, y });
-    }
-    items.sort((a, b) => a.y - b.y).forEach(it => drawItem(g, it));
-    return { canvas: cv, venues };
+    return cv;
   }
-
-  function drawItem(g, it) {
-    const { x, y } = it;
-    if (it.type === "tree") {
-      g.fillStyle = "rgba(48,66,26,.28)"; g.beginPath(); g.ellipse(x + it.r * 0.35, y + it.r * 0.45, it.r, it.r * 0.7, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = it.c; g.beginPath(); g.arc(x, y - it.r * 0.3, it.r, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "rgba(255,255,220,.18)"; g.beginPath(); g.arc(x - it.r * 0.3, y - it.r * 0.6, it.r * 0.5, 0, Math.PI * 2); g.fill();
-    } else if (it.type === "conifer") {
-      g.fillStyle = "rgba(48,66,26,.28)"; g.beginPath(); g.ellipse(x + 4, y + 3, it.r * 0.6, it.r * 0.35, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = COLORS.conifer; g.beginPath(); g.moveTo(x, y - it.r * 2); g.lineTo(x + it.r * 0.7, y + 2); g.lineTo(x - it.r * 0.7, y + 2); g.closePath(); g.fill();
-    } else if (it.type === "house") {
-      g.save(); g.translate(x, y); g.rotate(it.a);
-      g.fillStyle = "rgba(40,50,30,.25)"; g.fillRect(-10, -3, 24, 12);
-      g.fillStyle = COLORS.wall; g.fillRect(-12, -6, 22, 11);
-      g.fillStyle = it.roof; g.beginPath(); g.moveTo(-14, -6); g.lineTo(-1, -15); g.lineTo(12, -6); g.closePath(); g.fill();
-      g.fillStyle = "#3d4a44"; g.fillRect(-3, -1, 4, 6);
-      g.restore();
-    } else if (it.type === "sheep") {
-      g.fillStyle = "#fbfaf4"; g.beginPath(); g.ellipse(x, y, 4, 3, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#3b3b35"; g.beginPath(); g.arc(x + 4, y - 1, 1.4, 0, Math.PI * 2); g.fill();
-    } else if (it.type === "hay") {
-      g.fillStyle = "rgba(60,60,20,.25)"; g.beginPath(); g.ellipse(x + 2, y + 3, 7, 4, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#e0ac46"; g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = "#c48d2e"; g.lineWidth = 1.2; g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.stroke();
+  function drawStadium(g, x, y, rx, ry) {
+    g.fillStyle = "rgba(40,50,40,.25)"; g.beginPath(); g.ellipse(x + 2, y + 2.5, rx, ry, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#8b9295"; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#c3c7c6"; g.beginPath(); g.ellipse(x, y, rx * 0.8, ry * 0.76, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#5e9c4c"; g.beginPath(); g.ellipse(x, y, rx * 0.6, ry * 0.52, 0, 0, Math.PI * 2); g.fill();
+    if (rx > 12) {
+      g.strokeStyle = "#f4f4ee"; g.lineWidth = 0.9;
+      g.strokeRect(x - rx * 0.42, y - ry * 0.3, rx * 0.84, ry * 0.6);
+      g.beginPath(); g.moveTo(x, y - ry * 0.3); g.lineTo(x, y + ry * 0.3); g.stroke();
     }
   }
-
-  function drawPitch(g, w, h) {
-    const n = 8;
-    for (let k = 0; k < n; k++) { g.fillStyle = k % 2 ? COLORS.pitch : COLORS.pitchStripe; g.fillRect(-w / 2 + (w / n) * k, -h / 2, w / n + 0.5, h); }
-    g.strokeStyle = COLORS.line; g.lineWidth = 1.4;
-    g.strokeRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6);
-    [0.14, 0.31, 0.5, 0.69, 0.86].forEach(f => { g.beginPath(); g.moveTo(-w / 2 + w * f, -h / 2 + 3); g.lineTo(-w / 2 + w * f, h / 2 - 3); g.stroke(); });
-    [-1, 1].forEach(s => { // small and large rectangles, posts
-      g.strokeRect(s < 0 ? -w / 2 + 3 : w / 2 - 3 - w * 0.05, -h * 0.12, w * 0.05, h * 0.24);
-      g.strokeRect(s < 0 ? -w / 2 + 3 : w / 2 - 3 - w * 0.1, -h * 0.2, w * 0.1, h * 0.4);
-      g.lineWidth = 2.4; g.beginPath();
-      g.moveTo(s * (w / 2 + 1), -h * 0.06); g.lineTo(s * (w / 2 + 1), h * 0.06); g.stroke();
-      g.lineWidth = 1.4;
-    });
+  function drawPitch(g, x, y) {
+    g.fillStyle = "rgba(40,50,40,.25)"; g.fillRect(x - 6, y - 3, 13, 9);
+    g.fillStyle = "#5e9c4c"; g.fillRect(x - 7, y - 4.5, 14, 9);
+    g.strokeStyle = "#f4f4ee"; g.lineWidth = 0.9; g.strokeRect(x - 6, y - 3.5, 12, 7);
+    g.beginPath(); g.moveTo(x, y - 3.5); g.lineTo(x, y + 3.5); g.stroke();
+    g.fillStyle = "#e6a817"; star(g, x, y - 9, 4);
   }
-  function drawStand(g, x, y, w, h, roof) {
-    g.fillStyle = "rgba(40,50,40,.25)"; g.fillRect(x + 3, y + 4, w, h);
-    g.fillStyle = COLORS.stand; g.fillRect(x, y, w, h);
-    g.strokeStyle = "rgba(255,255,255,.35)"; g.lineWidth = 1;
-    for (let k = 3; k < h; k += 4) { g.beginPath(); g.moveTo(x + 2, y + k); g.lineTo(x + w - 2, y + k); g.stroke(); }
-    if (roof) { g.fillStyle = COLORS.standRoof; g.fillRect(x - 2, y - 3, w + 4, h * 0.45); }
+  function star(g, x, y, r) {
+    g.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+    g.closePath(); g.fill();
   }
-  function drawVenue(g, v, rnd) {
-    const k = v.st.kind;
-    if (k === "croker") return drawCroker(g);
-    g.save(); g.translate(v.x, v.y); g.rotate((v.angle || 0) * 0.35);
-    const size = { club: [120, 76], parish: [126, 80], county: [134, 84], province: [146, 92], semi: [152, 96] }[k];
-    const [w, h] = size;
-    // car park / apron
-    g.fillStyle = "#cfd1c2"; g.fillRect(-w / 2 - 14, -h / 2 - 22, w + 28, h + 44);
-    drawPitch(g, w, h);
-    if (k === "club") {
-      g.fillStyle = COLORS.wall; g.fillRect(-w / 2 - 8, h / 2 + 6, 34, 14);
-      g.fillStyle = COLORS.slate; g.fillRect(-w / 2 - 10, h / 2 + 4, 38, 6);
-    }
-    if (k === "parish") drawStand(g, -w * 0.25, -h / 2 - 18, w * 0.5, 14, false);
-    if (k === "county") { drawStand(g, -w * 0.35, -h / 2 - 20, w * 0.7, 16, true); g.fillStyle = COLORS.terrace; g.fillRect(-w * 0.4, h / 2 + 6, w * 0.8, 12); }
-    if (k === "province" || k === "semi") {
-      drawStand(g, -w * 0.42, -h / 2 - 21, w * 0.84, 18, true);
-      drawStand(g, -w * 0.42, h / 2 + 4, w * 0.84, 18, true);
-      g.fillStyle = COLORS.terrace; g.fillRect(-w / 2 - 12, -h * 0.35, 9, h * 0.7); g.fillRect(w / 2 + 3, -h * 0.35, 9, h * 0.7);
-    }
-    g.restore();
-  }
-  function drawCroker(g) {
-    const { x, y, rx, ry } = CROKER;
-    g.save(); g.translate(x, y);
-    g.fillStyle = "rgba(40,50,40,.28)"; g.beginPath(); g.ellipse(8, 10, rx, ry, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = "#d3d5cc"; g.beginPath(); g.ellipse(0, 0, rx + 18, ry + 18, 0, 0, Math.PI * 2); g.fill(); // concourse
-    g.fillStyle = COLORS.standRoof; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.fill();     // roof ring
-    // open terrace at one end (the Hill)
-    g.fillStyle = COLORS.terrace; g.beginPath(); g.moveTo(0, 0); g.ellipse(0, 0, rx, ry, 0, Math.PI * 0.8, Math.PI * 1.2); g.closePath(); g.fill();
-    g.fillStyle = "#b9bdbd"; g.beginPath(); g.ellipse(0, 0, rx * 0.8, ry * 0.76, 0, 0, Math.PI * 2); g.fill();   // seating bowl
-    g.strokeStyle = "rgba(255,255,255,.35)"; g.lineWidth = 1;
-    for (let k = 0.82; k < 1; k += 0.05) { g.beginPath(); g.ellipse(0, 0, rx * k, ry * k, 0, Math.PI * 1.22, Math.PI * 2.78); g.stroke(); }
-    g.save(); g.beginPath(); g.ellipse(0, 0, rx * 0.66, ry * 0.6, 0, 0, Math.PI * 2); g.clip();
-    g.fillStyle = COLORS.pitch; g.fillRect(-rx, -ry, rx * 2, ry * 2);
-    g.restore();
-    drawPitch(g, rx * 1.08, ry * 0.86);
-    // roof cross-bracing glints
-    g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 1.5;
-    for (let a = Math.PI * 1.25; a < Math.PI * 2.75; a += 0.18) {
-      g.beginPath(); g.moveTo(Math.cos(a) * rx * 0.82, Math.sin(a) * ry * 0.8); g.lineTo(Math.cos(a) * rx * 0.99, Math.sin(a) * ry * 0.99); g.stroke();
-    }
-    g.restore();
+  function drawHeritage(g, x, y) {
+    g.fillStyle = "rgba(40,30,20,.25)"; g.beginPath(); g.arc(x + 1.2, y + 1.5, 5.5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = COL.brown; g.beginPath(); g.arc(x, y, 5.5, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.beginPath(); g.arc(x, y, 3.6, 0, Math.PI * 2); g.stroke();
   }
 
-  // ---------- Live view ----------
+  // ---------------------------------------------------------- live view
   const M = {
-    canvas: null, ctx: null, marks: null, pinEl: null, world: null, venues: [], R: 1,
-    pinKm: 0, focus: null, vw: 0, vh: 0, dpr: 1, anim: null, focusY: 0.5,
+    ready: false, world: null, road: null, roadXY: [], marksXY: [], signs: [], pinEl: null,
+    vw: 0, vh: 0, dpr: 1, R: 1, cam: { x: W / 2, y: H / 2, s: 0.3 }, focusX: 0.5, focusY: 0.5, band: null, frac: 0, anim: null,
 
-    init(canvas, marks, stops) {
-      maxKm = stops[stops.length - 1].km;
-      this.canvas = canvas; this.ctx = canvas.getContext("2d"); this.marks = marks;
+    async init(canvas, marksEl, geo, pois, mountains, croker) {
+      this.canvas = canvas; this.ctx = canvas.getContext("2d"); this.marksEl = marksEl;
       this.dpr = Math.min(2, window.devicePixelRatio || 1);
-      this.R = this.dpr >= 2 ? 1.3 : 1.05; // keeps the painted map under ~7 megapixels for phones
-      const painted = paintWorld(this.R, stops);
-      this.world = painted.canvas; this.venues = painted.venues;
-      // signs
-      marks.innerHTML = "";
-      this.signs = this.venues.map(v => {
-        const el = document.createElement("div");
-        el.className = "sign" + (v.st.kind === "croker" ? " sign-croker" : "");
-        el.innerHTML = `<b></b><span></span>`;
-        el.firstChild.textContent = v.st.name;
-        el.lastChild.textContent = `${v.st.km} km`;
-        marks.appendChild(el);
-        return { el, x: v.x, y: v.y - (v.st.kind === "croker" ? CROKER.ry + 26 : 66) };
-      });
+      this.R = this.dpr >= 2 ? 1.25 : 1;
+      // Paint once the web fonts are in, so labels use them (give up after 2.5 s).
+      try {
+        await Promise.race([
+          Promise.all([document.fonts.load('700 21px "Fraunces"'), document.fonts.load('700 10px "Overpass"'), document.fonts.load('800 14px "Overpass"')]),
+          new Promise(r => setTimeout(r, 2500))
+        ]);
+      } catch (e) { /* fall back to system fonts */ }
+      this.world = paint(this.R, geo, pois, mountains, croker);
       this.pinEl = document.createElement("div");
-      this.pinEl.className = "pin";
-      this.pinEl.innerHTML = "<i></i>";
-      marks.appendChild(this.pinEl);
-      this.focus = pointAt(kmToDist(0));
+      this.pinEl.className = "pin"; this.pinEl.innerHTML = "<i></i>";
+      marksEl.appendChild(this.pinEl);
+      this.ready = true;
       this.resize();
       window.addEventListener("resize", () => this.resize());
     },
@@ -326,49 +252,103 @@
       this.canvas.style.width = this.vw + "px"; this.canvas.style.height = this.vh + "px";
       this.draw();
     },
-    scale() { return Math.max(0.55, Math.min(1.15, Math.min(this.vw / 700, this.vh / 900))); },
-    camera() {
-      const s = this.scale();
-      const clampAxis = (o, view, size) => size * s <= view ? (view - size * s) / 2 : Math.min(0, Math.max(view - size * s, o));
-      const ox = clampAxis(this.vw / 2 - this.focus.x * s, this.vw, W);
-      const oy = clampAxis(this.vh * this.focusY - this.focus.y * s, this.vh, H);
-      return { s, ox, oy };
+    followScale() { return Math.max(0.6, Math.min(1.15, Math.min(this.vw / 620, this.vh / 800))); },
+
+    setRoad(road) {
+      this.road = road;
+      this.roadXY = road.pts.map(p => ({ ...proj(p.lat, p.lon), d: p.d }));
+      this.signs.forEach(s => s.el.remove());
+      this.signs = road.marks.map((m, i) => {
+        const el = document.createElement("div");
+        const last = i === road.marks.length - 1;
+        el.className = "sign" + (i === 0 ? " sign-home" : last ? " sign-croker" : " sign-" + m.kind);
+        el.innerHTML = "<b></b><span></span>";
+        el.firstChild.textContent = i === 0 ? m.name : m.name;
+        el.lastChild.textContent = i === 0 ? "Home · 0 km" : last ? `${Math.round(road.total)} km` : `${m.tag} · ${Math.round(m.km)} km`;
+        this.marksEl.insertBefore(el, this.pinEl);
+        return { el, ...proj(m.lat, m.lon) };
+      });
+      this.draw();
     },
+    pointAtKm(d) {
+      const p = this.roadXY;
+      if (!p.length) return { x: W / 2, y: H / 2 };
+      d = Math.max(0, Math.min(p[p.length - 1].d, d));
+      let lo = 0, hi = p.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (p[m].d < d) lo = m; else hi = m; }
+      const a = p[lo], b = p[hi], t = (d - a.d) / ((b.d - a.d) || 1);
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    },
+    pinKm() { return this.road ? this.frac * this.road.total : 0; },
+    overviewCam() {
+      const xs = this.roadXY.map(p => p.x), ys = this.roadXY.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      const bw = this.band ? this.band.w : this.vw, bh = this.band ? this.band.h : this.vh * 0.5;
+      const s = Math.max(0.1, Math.min(this.followScale(), (bw - 40) / (maxX - minX + 160), (bh - 30) / (maxY - minY + 110)));
+      return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 - 20 / s, s };
+    },
+    islandCam() {
+      const bw = this.band ? this.band.w : this.vw, bh = this.band ? this.band.h : this.vh;
+      return { x: W / 2, y: H / 2 + 20, s: Math.max(0.1, Math.min(bw / (W - 80), bh / (H - 160))) };
+    },
+    followCam() { const p = this.pointAtKm(this.pinKm()); return { x: p.x, y: p.y, s: this.followScale() }; },
+
     draw() {
-      if (!this.ctx) return;
-      const g = this.ctx, { s, ox, oy } = this.camera(), d = this.dpr;
+      if (!this.ready) return;
+      const g = this.ctx, d = this.dpr, { s } = this.cam;
+      const ox = this.vw * this.focusX - this.cam.x * s, oy = this.vh * this.focusY - this.cam.y * s;
       g.setTransform(d, 0, 0, d, 0, 0);
-      g.fillStyle = COLORS.meadow; g.fillRect(0, 0, this.vw, this.vh);
+      g.fillStyle = COL.sea; g.fillRect(0, 0, this.vw, this.vh);
+      g.imageSmoothingQuality = "high";
       g.drawImage(this.world, ox, oy, W * s, H * s);
-      // the stretch travelled
-      const end = kmToDist(this.pinKm), start = kmToDist(0);
-      g.setTransform(d * s, 0, 0, d * s, d * ox, d * oy);
-      g.lineCap = "round"; g.lineJoin = "round";
-      g.beginPath();
-      let p = pointAt(start); g.moveTo(p.x, p.y);
-      for (const q of ROAD.pts) if (q.d > start && q.d < end) g.lineTo(q.x, q.y);
-      p = pointAt(end); g.lineTo(p.x, p.y);
-      g.strokeStyle = "rgba(255,255,255,.7)"; g.lineWidth = 11; g.stroke();
-      g.strokeStyle = COLORS.trail; g.lineWidth = 7; g.stroke();
-      // overlay positions
-      this.signs.forEach(sg => { sg.el.style.transform = `translate(${ox + sg.x * s}px, ${oy + sg.y * s}px) translate(-50%, -100%)`; });
-      this.pinEl.style.transform = `translate(${ox + p.x * s}px, ${oy + p.y * s}px)`;
+      if (this.roadXY.length) {
+        g.setTransform(d * s, 0, 0, d * s, d * ox, d * oy);
+        g.lineCap = "round"; g.lineJoin = "round";
+        const path = new Path2D();
+        this.roadXY.forEach((p, i) => i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y));
+        const lw = 1 / s;
+        g.strokeStyle = COL.roadEdge; g.lineWidth = Math.max(9, 11 * lw); g.stroke(path);
+        g.strokeStyle = COL.road; g.lineWidth = Math.max(6.5, 8 * lw); g.stroke(path);
+        g.setLineDash([Math.max(5, 6 * lw), Math.max(6, 8 * lw)]); g.strokeStyle = "rgba(185,167,122,.7)"; g.lineWidth = Math.max(1, 1.2 * lw); g.stroke(path); g.setLineDash([]);
+        const end = this.pinKm();
+        const trail = new Path2D();
+        let started = false;
+        for (const p of this.roadXY) { if (p.d > end) break; started ? trail.lineTo(p.x, p.y) : trail.moveTo(p.x, p.y); started = true; }
+        const pp = this.pointAtKm(end);
+        if (started) trail.lineTo(pp.x, pp.y);
+        g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = Math.max(7, 9 * lw); g.stroke(trail);
+        g.strokeStyle = COL.trail; g.lineWidth = Math.max(4.5, 6 * lw); g.stroke(trail);
+        this.pinEl.style.transform = `translate(${ox + pp.x * s}px, ${oy + pp.y * s}px)`;
+        this.pinEl.hidden = false;
+      } else if (this.pinEl) this.pinEl.hidden = true;
+      const far = s < this.followScale() * 0.55;
+      this.marksEl.classList.toggle("far", far);
+      this.signs.forEach(sg => { sg.el.style.transform = `translate(${ox + sg.x * s}px, ${oy + sg.y * s - 12}px) translate(-50%, -100%)`; });
     },
-    setFocusY(f) { this.focusY = f; this.draw(); },
-    jumpTo(km) { this.pinKm = km; this.focus = pointAt(kmToDist(km)); this.draw(); },
-    // Animate the camera from one point on the road to another (used for the opening flyover).
-    pan(fromKm, toKm, ms) {
-      return this._animate(ms, t => { this.focus = pointAt(kmToDist(fromKm + (toKm - fromKm) * t)); });
+    setFocus(fx, fy, band) { this.focusX = fx; this.focusY = fy; this.band = band; this.draw(); },
+    jumpTo(frac) { this.frac = frac; this.cam = this.followCam(); this.draw(); },
+    moveCam(to, ms) {
+      const from = { ...this.cam };
+      return this._animate(ms, e => {
+        // zoom on a log scale so it feels even
+        this.cam = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, s: Math.exp(Math.log(from.s) + (Math.log(to.s) - Math.log(from.s)) * e) };
+      });
     },
-    travelTo(km, ms = 1600) {
-      const from = this.pinKm, to = km;
-      if (to === from) { this.focus = pointAt(kmToDist(to)); this.draw(); return Promise.resolve(); }
-      return this._animate(ms, t => { this.pinKm = from + (to - from) * t; this.focus = pointAt(kmToDist(this.pinKm)); });
+    showOverview(ms = 0) { const c = this.overviewCam(); if (!ms) { this.cam = c; this.draw(); return Promise.resolve(); } return this.moveCam(c, ms); },
+    zoomToPin(ms = 1400) { return this.moveCam(this.followCam(), ms); },
+    travelTo(frac, ms = 1800) {
+      const from = this.frac;
+      if (frac === from) return this.zoomToPin(500);
+      const s0 = this.cam.s, s1 = this.followScale();
+      return this._animate(ms, e => {
+        this.frac = from + (frac - from) * e;
+        const p = this.pointAtKm(this.pinKm());
+        this.cam = { x: p.x, y: p.y, s: s0 + (s1 - s0) * Math.min(1, e * 3) };
+      });
     },
     _animate(ms, step) {
       if (this.anim) cancelAnimationFrame(this.anim);
-      const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduce) ms = 1;
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ms = 1;
       return new Promise(res => {
         const t0 = performance.now();
         const tick = now => {

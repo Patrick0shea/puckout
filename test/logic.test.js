@@ -40,7 +40,7 @@ test("shares add up to one and rarer answers go further", () => {
     assert.ok(Math.abs(sum - 1) < 1e-9, q.id);
   }
   const sh = L.shares("shc-ever");
-  assert.ok(L.tierFor(sh.london).km > L.tierFor(sh.kilkenny).km);
+  assert.ok(L.tierFor(sh.london).pts > L.tierFor(sh.kilkenny).pts);
 });
 
 test("real counts move the shares", () => {
@@ -50,9 +50,7 @@ test("real counts move the shares", () => {
 });
 
 test("seven All-Star answers is exactly Croke Park", () => {
-  const top = D.TIERS[0].km * D.CONFIG.perDay;
-  assert.equal(top, D.STOPS[D.STOPS.length - 1].km);
-  assert.equal(L.stopFor(top).name, "Croke Park");
+  assert.equal(D.TIERS[0].pts * D.CONFIG.perDay, D.CONFIG.maxPoints);
 });
 
 test("each day gets seven different questions, the same for everyone", () => {

@@ -1,25 +1,25 @@
 # Puckout
 
-A daily GAA quiz. Everyone gets the same seven questions each day, and every question has lots of right answers. The fewer people who give your answer, the further it carries you down the road from your club pitch to Croke Park.
+A daily GAA quiz. Pick your home club, then answer seven questions. Every question has lots of right answers, and the fewer people who give yours, the further it carries you along a road across a cartoon map of Ireland, from your club to Croke Park.
 
 ## How it plays
 
-- Seven questions a day, picked from the pool by date (Irish time). Everyone gets the same set.
-- You have 30 seconds per question. Wrong answers cost nothing, so you can keep guessing until the clock runs out.
+- **Pick your club.** Search more than 700 clubs, or any of about 8,800 towns, villages and parishes if your club isn't listed yet. Your choice is remembered.
+- **Today's road.** The road runs from your club to Croke Park, past a handful of places on the way: county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, Hayes' Hotel, Newgrange). The stops change every day. Clubs close to Croke Park get a day trip out through the neighbouring counties and back.
+- **Seven questions a day**, the same for everyone, picked by date (Irish time). You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
 - Typos are forgiven when the answer is clear: `kery` counts as Kerry and `Co. Tipp` as Tipperary. Nicknames such as `Dubs`, `Cats` and `Deise` work too.
-- The rarer your answer, the further it takes you:
+- **The rarer the answer, the further you go:**
 
 | Tier | Share of correct answers | Distance |
 | --- | --- | --- |
-| All-Star | under 3% | +100 km |
-| Inter-county | 3–7% | +70 km |
-| Senior | 7–15% | +45 km |
-| Intermediate | 15–30% | +25 km |
-| Junior | 30% or more | +10 km |
-| Wide | out of time | +0 km |
+| All-Star | under 3% | 1/7 of the road |
+| Inter-county | 3–7% | 10% |
+| Senior | 7–15% | 6.4% |
+| Intermediate | 15–30% | 3.6% |
+| Junior | 30% or more | 1.4% |
+| Wide | out of time | 0 |
 
-- Stops on the road: your club pitch (0 km), divisional final (120), county final (250), provincial final (400), All-Ireland quarter-final (550) and Croke Park (700). Seven All-Star answers gets you exactly to Croke Park.
-- Progress is saved in the browser for the day. At full time you get a result you can copy and share.
+- Seven All-Star answers gets you all the way to Croke Park. As you pass each place you get a postcard about it. At full time you see how far you got and a result you can copy and share.
 
 ## Running it
 
@@ -35,12 +35,16 @@ To publish it on GitHub Pages: Settings → Pages → Deploy from a branch → `
 
 | File | What it does |
 | --- | --- |
-| `js/data.js` | The question pool, everything a player might type (with aliases), tiers and road stops |
+| `js/data.js` | The question pool, everything a player might type (with aliases) and the tiers |
 | `js/logic.js` | Picks today's questions, recognises typed answers, works out rarity. No DOM, so the tests run in Node |
-| `js/map.js` | Paints the countryside, the road and the grounds on a canvas, and moves the camera and pin |
-| `js/game.js` | The screens and the flow: intro, questions, results, full time |
+| `js/pois.js` | The places a road can pass: county grounds, legends' clubs and landmarks, each with a one-line postcard |
+| `js/route.js` | Picks today's stops between your club and Croke Park and smooths a road through them |
+| `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
+| `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
+| `data/*.js` | Generated map, club and town data (see below) |
+| `tools/build_data.py` | Rebuilds `data/` from open data |
 | `styles.css` | Look and layout |
-| `test/` | Logic tests (`node --test`) |
+| `test/` | Logic and route tests (`node --test`) |
 
 ## Adding questions
 
@@ -58,3 +62,24 @@ Add an entry to `QUESTIONS` in `js/data.js`:
 ## Where the percentages come from
 
 The shares start out as the estimates in `js/data.js`. To use real answers from players, connect a small backend that records each correct answer per question and returns the counts. Then return those counts from `crowdCounts(qid)` in `js/game.js` (shape: `{ entityId: count }`). `logic.shares()` blends them with the estimates, and real data takes over as it grows (`CONFIG.priorWeight` sets how many answers the estimates are worth).
+
+## Adding places to pass
+
+Add an entry to `POIS` in `js/pois.js` with a `kind` (`ground`, `legend` or `landmark`), its coordinates, a short `tag` for the road sign and a one-line `line` for the postcard. Keep facts short and checkable.
+
+## Map and club data
+
+`data/geo.js`, `data/clubs.js` and `data/places.js` are generated by `tools/build_data.py`, which downloads open data once into a cache folder:
+
+```bash
+python3 tools/build_data.py --cache ~/.cache/puckout
+```
+
+- **Coastline, big loughs and the Shannon:** [Natural Earth](https://www.naturalearthdata.com/) (public domain)
+- **County outlines and smaller loughs:** © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, via Nominatim (ODbL)
+- **Towns and villages:** [GeoNames](https://www.geonames.org/) (CC BY 4.0)
+- **Clubs:** [Wikidata](https://www.wikidata.org/) (CC0). Each club is placed using its Wikidata or Wikipedia coordinates, or the town in its name within its county. Clubs that can't be placed are left out; players from those clubs can search for their town instead.
+
+The game shows this credit on the opening screen. Keep it if you change the page.
+
+To add or fix a club by hand, add a row `[name, countyIndex, lat, lon]` to `data/clubs.js` (county indexes follow the `counties` list at the top of the file).

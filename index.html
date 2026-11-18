@@ -18,20 +18,34 @@
 
   <!-- Opening screen -->
   <section id="intro" class="screen">
-    <div class="masthead">
+    <div class="masthead" id="masthead">
       <h1 class="logo">Puckout</h1>
       <p class="eyebrow">The road to Croker</p>
       <p class="sub">7 questions · 30 seconds each · rarer answers go further</p>
-      <p class="today" id="today-line">Today: your club pitch to Croke Park</p>
+      <p class="today" id="today-line">From your club to Croke Park</p>
     </div>
     <div class="dock card" id="intro-dock">
-      <button id="start" class="btn-sign" type="button">Start today's road</button>
+      <div id="picker" class="picker">
+        <label for="club-q" class="pick-label">Where's your club?</label>
+        <ul id="club-results" class="club-results" role="listbox" aria-label="Clubs and towns" hidden></ul>
+        <p id="club-empty" class="small" hidden>No club or town by that name. Try your parish, village or nearest town.</p>
+        <input id="club-q" type="search" placeholder="Search your club, parish or town" autocomplete="off" spellcheck="false"
+          role="combobox" aria-autocomplete="list" aria-controls="club-results" aria-expanded="false">
+      </div>
+      <div id="picked" class="picked" hidden>
+        <div class="home-badge" aria-hidden="true"></div>
+        <div class="home-text"><small>Starting from</small><b id="home-name"></b><span id="home-county"></span></div>
+        <button id="change-club" class="btn-link" type="button">Change</button>
+      </div>
+      <p id="road-line" class="road-line" hidden></p>
+      <button id="start" class="btn-sign" type="button" hidden>Start today's road</button>
       <details class="howto">
         <summary>How to play</summary>
         <ol>
           <li>Everyone gets the same seven GAA questions each day.</li>
           <li>Each question has lots of right answers. Name one before the 30-second clock runs out.</li>
-          <li>The fewer people who give your answer, the further down the road it takes you. Wrong answers cost nothing, so keep guessing.</li>
+          <li>The fewer people who give your answer, the further down the road from your club it takes you. Wrong answers cost nothing, so keep guessing.</li>
+          <li>Along the way you pass county grounds, the home clubs of legends and famous sights. The stops change every day.</li>
           <li>Seven All-Star answers gets you all the way to Croke Park.</li>
         </ol>
         <table class="tiers" id="tier-table"></table>
@@ -40,6 +54,7 @@
         <span class="road-no" id="road-no">Road #1</span>
         <span class="small">New road every day at midnight, Irish time</span>
       </div>
+      <p class="credit">Map data © OpenStreetMap contributors, Natural Earth, GeoNames. Clubs from Wikidata.</p>
     </div>
   </section>
 
@@ -50,7 +65,7 @@
       <div class="pips" id="pips"></div>
       <div class="qcount" id="qcount">Question 1 of 7</div>
     </div>
-    <div class="next-sign" id="next-sign"><span aria-hidden="true">↑</span> <b id="next-name">Divisional final</b> <em id="next-km">120</em></div>
+    <div class="next-sign" id="next-sign"><span aria-hidden="true">↑</span> <b id="next-name"></b> <em id="next-km"></em></div>
   </header>
 
   <section id="question" class="qcard card" hidden aria-live="polite">
@@ -79,6 +94,7 @@
       <div class="gain" id="gain">+45 km</div>
     </div>
     <p class="said" id="said"></p>
+    <div id="postcards" class="postcards"></div>
     <ul class="dist" id="dist"></ul>
     <p class="fact" id="fact"></p>
     <button id="next" class="btn-sign btn-small" type="button">Next question</button>
@@ -88,7 +104,7 @@
   <section id="fulltime" class="ft card" hidden>
     <p class="eyebrow">Full time · <span id="ft-road">Road #1</span></p>
     <h2 class="ft-title" id="ft-title">You reached the County final</h2>
-    <p class="ft-km"><b id="ft-km">0</b> of 700 km</p>
+    <p class="ft-km" id="ft-km"></p>
     <ol class="ft-list" id="ft-list"></ol>
     <pre class="share" id="share-text"></pre>
     <div class="ft-actions">
@@ -98,8 +114,13 @@
     <p class="small">A new road opens at midnight, Irish time.</p>
   </section>
 
+  <script src="data/geo.js"></script>
+  <script src="data/clubs.js"></script>
+  <script src="data/places.js"></script>
   <script src="js/data.js"></script>
   <script src="js/logic.js"></script>
+  <script src="js/pois.js"></script>
+  <script src="js/route.js"></script>
   <script src="js/map.js"></script>
   <script src="js/game.js"></script>
 </body>

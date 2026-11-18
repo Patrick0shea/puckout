@@ -1,31 +1,38 @@
 /* Puckout — screens and flow. */
 (function () {
   "use strict";
-  const D = window.PuckoutData, L = window.PuckoutLogic, RoadMap = window.PuckoutMap;
+  const D = window.PuckoutData, L = window.PuckoutLogic, R = window.PuckoutRoute, RoadMap = window.PuckoutMap;
+  const POI = window.PuckoutPois, GEO = window.PuckoutGeo;
   const $ = id => document.getElementById(id);
   const SECS = D.CONFIG.secondsPerQuestion;
-  const MAX_KM = D.STOPS[D.STOPS.length - 1].km;
+  const MAX = D.CONFIG.maxPoints;
 
   const today = L.irishDate();
   const roadNo = L.dayNumber(today);
   const todays = L.questionsFor(today);
-  const KEY = "puckout:v1:" + today;
+  const KEY = "puckout:v2:" + today;
+  const HOME_KEY = "puckout:home";
+
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: play without saving */ } }
+  };
 
   // ---------- Saved state ----------
-  let state = { answers: {}, started: {}, misses: {} };
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (s && s.answers) state = Object.assign(state, s);
-  } catch (e) { /* storage blocked: play without saving */ }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  let state = Object.assign({ answers: {}, started: {}, misses: {} }, store.get(KEY) || {});
+  const save = () => store.set(KEY, state);
+  let home = store.get(HOME_KEY);
+  let road = null;
 
   const answered = () => todays.filter(id => state.answers[id]).length;
   const current = () => todays.find(id => !state.answers[id]) || null;
-  const totalKm = () => todays.reduce((s, id) => s + ((state.answers[id] && state.answers[id].km) || 0), 0);
+  const points = () => todays.reduce((s, id) => s + ((state.answers[id] && state.answers[id].pts) || 0), 0);
+  const frac = () => Math.min(1, points() / MAX);
+  const kmDone = () => road ? frac() * road.total : 0;
   const pct = s => s < 0.01 ? "<1%" : Math.round(s * 100) + "%";
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // Hook for real crowd counts. Return {entityId: count} for a question, or null.
-  // Plug a backend in here (see README); built-in estimates are used until then.
   const crowdCounts = () => null;
 
   // ---------- Screens ----------
@@ -35,42 +42,127 @@
     document.querySelector(".fade-top").hidden = ids.includes("fulltime");
     document.body.classList.toggle("on-intro", ids.includes("intro"));
   }
-
-  // Keep the pin in the open strip of map between the top card and the bottom one.
-  let framing = [null, null];
-  function frame(topId, bottomId) {
-    framing = [topId, bottomId];
-    const vh = window.innerHeight;
+  // Keep the pin (or the overview) in the open stretch of map between the cards.
+  let framing = [null, null, null];
+  function frame(topId, bottomId, leftId) {
+    framing = [topId, bottomId, leftId];
+    const vw = window.innerWidth, vh = window.innerHeight;
     const top = topId ? $(topId).getBoundingClientRect().bottom : 0;
     const bottom = bottomId ? $(bottomId).getBoundingClientRect().top : vh;
-    RoadMap.setFocusY(Math.max(0.15, Math.min(0.85, (top + bottom) / 2 / vh)));
+    const left = leftId ? $(leftId).getBoundingClientRect().right : 0;
+    RoadMap.setFocus((left + vw) / 2 / vw, Math.max(0.15, Math.min(0.85, (top + bottom) / 2 / vh)), { w: vw - left, h: Math.max(120, bottom - top) });
   }
   window.addEventListener("resize", () => frame(...framing));
+  const sideBySide = () => window.innerWidth >= 960;
 
+  // ---------- Home club ----------
+  function setHome(h) {
+    home = h;
+    store.set(HOME_KEY, h);
+    road = R.makeRoad(home, today);
+    RoadMap.setRoad(road);
+    RoadMap.frac = frac();
+    renderIntro();
+    RoadMap.showOverview(1200);
+  }
+
+  const searchIndex = [];
+  function words(s) {
+    return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+  }
+  function buildIndex() {
+    if (searchIndex.length) return;
+    const C = window.PuckoutClubs, P = window.PuckoutPlaces;
+    if (C) C.clubs.forEach(([name, ci, lat, lon]) => searchIndex.push({ name, county: C.counties[ci], lat, lon, kind: "club", key: L.norm(name), words: words(name) }));
+    if (P) P.places.forEach(([name, ci, lat, lon]) => searchIndex.push({ name, county: P.counties[ci], lat, lon, kind: "town", key: L.norm(name), words: words(name) }));
+  }
+  function search(q) {
+    buildIndex();
+    const qw = words(q);
+    if (!qw.length) return [];
+    const full = L.norm(q);
+    const hits = [];
+    for (const it of searchIndex) {
+      let score = 0, ok = true;
+      for (const w of qw) {
+        const i = it.words.findIndex(x => x.startsWith(w));
+        if (i === -1) { if (w.length >= 3 && it.key.includes(w)) score += 1; else { ok = false; break; } }
+        else score += i === 0 ? 4 : 2;
+      }
+      if (!ok) continue;
+      if (it.key === full) score += 6;
+      if (it.kind === "club") score += 3;
+      score -= it.name.length / 60;
+      hits.push({ it, score });
+    }
+    return hits.sort((a, b) => b.score - a.score).slice(0, 8).map(h => h.it);
+  }
+
+  let results = [], active = -1;
+  function renderResults() {
+    const ul = $("club-results");
+    ul.innerHTML = results.map((r, i) =>
+      `<li role="option" id="opt-${i}" aria-selected="${i === active}" data-i="${i}" class="${i === active ? "on" : ""}"><b>${esc(r.name)}</b><span>${r.kind === "club" ? "Club" : "Town"} · ${esc(r.county)}</span></li>`
+    ).join("");
+    ul.hidden = !results.length;
+    $("club-q").setAttribute("aria-expanded", results.length ? "true" : "false");
+    $("club-empty").hidden = !($("club-q").value.trim().length >= 2 && !results.length);
+    if (active >= 0) $("club-q").setAttribute("aria-activedescendant", "opt-" + active);
+    else $("club-q").removeAttribute("aria-activedescendant");
+  }
+  $("club-q").addEventListener("input", () => { results = search($("club-q").value); active = results.length ? 0 : -1; renderResults(); });
+  $("club-q").addEventListener("keydown", ev => {
+    if (ev.key === "ArrowDown") { active = Math.min(results.length - 1, active + 1); renderResults(); ev.preventDefault(); }
+    else if (ev.key === "ArrowUp") { active = Math.max(0, active - 1); renderResults(); ev.preventDefault(); }
+    else if (ev.key === "Enter" && active >= 0) { choose(results[active]); ev.preventDefault(); }
+  });
+  $("club-results").addEventListener("click", ev => { const li = ev.target.closest("li"); if (li) choose(results[+li.dataset.i]); });
+  function choose(r) {
+    results = []; renderResults();
+    $("club-q").value = "";
+    setHome({ name: r.name, county: r.county, lat: r.lat, lon: r.lon, kind: r.kind });
+  }
+  $("change-club").addEventListener("click", () => {
+    $("picked").hidden = true; $("picker").hidden = false; $("start").hidden = true; $("road-line").hidden = true;
+    frame("masthead", "intro-dock");
+    try { $("club-q").focus(); } catch (e) {}
+  });
+
+  // ---------- HUD ----------
   function renderHud() {
-    const km = totalKm(), n = current();
-    $("km").textContent = Math.round(km);
+    const n = current(), done = kmDone();
+    $("km").textContent = Math.round(done);
     $("pips").innerHTML = todays.map(id => {
       const a = state.answers[id];
       return `<span class="pip ${a ? a.tier : id === n ? "now" : ""}"></span>`;
     }).join("");
     $("qcount").textContent = n ? `Question ${todays.indexOf(n) + 1} of ${todays.length}` : "Full time";
-    const next = L.nextStop(km);
+    const next = road && road.marks.find(m => m.km > done + 0.01);
     $("next-sign").hidden = !next;
-    if (next) { $("next-name").textContent = next.name; $("next-km").textContent = next.km; }
+    if (next) { $("next-name").textContent = next.name; $("next-km").textContent = Math.max(1, Math.round(next.km - done)); }
   }
 
   // ---------- Intro ----------
   function renderIntro() {
     $("road-no").textContent = `Road #${roadNo}`;
-    $("today-line").textContent = answered() ? `You're ${Math.round(totalKm())} km down today's road` : "Today: your club pitch to Croke Park";
-    $("start").textContent = answered() ? "Back on the road" : "Start today's road";
     $("tier-table").innerHTML = D.TIERS.map((t, i) => {
       const range = t.max === Infinity ? `${Math.round(D.TIERS[i - 1].max * 100)}% or more give it` : i === 0 ? `Under ${Math.round(t.max * 100)}% give it` : `${Math.round(D.TIERS[i - 1].max * 100)}–${Math.round(t.max * 100)}%`;
-      return `<tr><td><b>${t.name}</b></td><td class="small">${range}</td><td>+${t.km} km</td></tr>`;
-    }).join("") + `<tr><td><b>Wide</b></td><td class="small">Out of time</td><td>+0 km</td></tr>`;
+      return `<tr><td><b>${t.name}</b></td><td class="small">${range}</td><td>${Math.round(t.pts / MAX * 1000) / 10}% of the road</td></tr>`;
+    }).join("");
+    const has = !!(home && road);
+    $("picker").hidden = has; $("picked").hidden = !has; $("start").hidden = !has; $("road-line").hidden = !has;
+    if (has) {
+      $("home-name").textContent = home.name;
+      $("home-county").textContent = `${home.kind === "club" ? "Club" : "Town"} · ${home.county}`;
+      const via = road.marks.slice(1, -1).map(m => m.name);
+      $("road-line").innerHTML = `Today's road: <b>${Math.round(road.total)} km</b> to Croke Park, by way of ${esc(via.join(", "))}.`;
+      $("start").textContent = answered() ? "Back on the road" : "Start today's road";
+      $("today-line").textContent = answered() ? `You're ${Math.round(kmDone())} km down today's road` : "From your club to Croke Park";
+    } else {
+      $("today-line").textContent = "From your club to Croke Park";
+    }
     show("intro");
-    frame(null, "intro-dock");
+    frame("masthead", "intro-dock");
   }
 
   // ---------- Asking ----------
@@ -87,6 +179,7 @@
     renderHud();
     show("hud", "question", "shotbar");
     frame("question", "shotbar");
+    RoadMap.zoomToPin(900);
     if (!state.started[qid]) { state.started[qid] = Date.now(); save(); }
     deadline = state.started[qid] + SECS * 1000;
     tick();
@@ -107,11 +200,7 @@
     const list = state.misses[activeQ] || [];
     $("misses").innerHTML = list.map(id => `<span>${esc(L.EBY[id].label)}</span>`).join("");
   }
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  function shake() {
-    const f = $("shoot");
-    f.classList.remove("shake"); void f.offsetWidth; f.classList.add("shake");
-  }
+  function shake() { const f = $("shoot"); f.classList.remove("shake"); void f.offsetWidth; f.classList.add("shake"); }
 
   $("shoot").addEventListener("submit", ev => {
     ev.preventDefault();
@@ -136,32 +225,37 @@
     if (!qid || state.answers[qid]) return;
     clearInterval(timer);
     activeQ = null;
+    const before = kmDone();
     let entry;
-    if (!entity) entry = { entity: null, raw: "", tier: "wide", share: 0, km: 0 };
+    if (!entity) entry = { entity: null, raw: "", tier: "wide", share: 0, pts: 0 };
     else {
       const share = L.shares(qid, crowdCounts(qid))[entity];
       const t = L.tierFor(share);
-      entry = { entity, raw, tier: t.id, share, km: t.km };
+      entry = { entity, raw, tier: t.id, share, pts: t.pts };
     }
     state.answers[qid] = entry;
     save();
-    showResult(qid);
+    const after = kmDone();
+    const passed = road ? road.marks.filter((m, i) => i > 0 && m.km > before + 0.01 && m.km <= after + 0.01) : [];
+    showResult(qid, after - before, passed);
     renderHud();
-    RoadMap.travelTo(totalKm(), entry.km ? 1800 : 400);
+    RoadMap.travelTo(frac(), entry.pts ? 2000 : 500);
   }
 
-  function showResult(qid) {
+  function showResult(qid, gained, passed) {
     const a = state.answers[qid], q = L.QBY[qid], t = L.tierById(a.tier);
     $("badge").className = "badge " + a.tier;
     $("badge").textContent = a.entity ? t.name : "Out of time";
-    $("gain").textContent = `+${a.km} km`;
+    $("gain").textContent = `+${Math.round(gained)} km`;
     $("said").textContent = a.entity
       ? `${pct(a.share)} of correct answers were ${L.EBY[a.entity].label}.`
       : "The clock beat you. Here's what counted.";
+    $("postcards").innerHTML = passed.map(m =>
+      `<div class="postcard pc-${m.kind}"><span class="pc-kind">${m.kind === "croker" ? "You made it" : "You passed"}</span><b>${esc(m.name)}</b><p>${esc(m.line)}</p></div>`
+    ).join("");
     const sh = L.shares(qid, crowdCounts(qid));
     const rows = Object.entries(sh).sort((x, y) => y[1] - x[1]);
     const max = rows[0][1];
-    // Top five plus yours; the rest behind a toggle so the map stays visible on phones.
     const shown = rows.filter(([id], i) => i < 5 || id === a.entity);
     const row = ([id, s]) =>
       `<li class="${id === a.entity ? "you" : ""}"><span class="nm">${esc(L.EBY[id].label)}</span><span class="bar"><i style="width:${(s / max * 100).toFixed(1)}%"></i></span><span class="pct">${pct(s)}</span></li>`;
@@ -178,26 +272,34 @@
   $("next").addEventListener("click", () => { const n = current(); n ? ask(n) : fullTime(); });
 
   // ---------- Full time ----------
+  function reached() {
+    const done = kmDone();
+    let m = road.marks[0];
+    for (const x of road.marks) if (x.km <= done + 0.01) m = x;
+    return m;
+  }
   function fullTime() {
-    const km = totalKm(), stop = L.stopFor(km);
+    const done = kmDone(), m = reached(), made = frac() >= 1;
     $("ft-road").textContent = `Road #${roadNo}`;
-    $("ft-title").textContent = km >= MAX_KM ? "You made it to Croke Park. All-Ireland final day." :
-      stop.km === 0 ? "You didn't get far past the club gate today." : `You reached the ${stop.name}.`;
-    $("ft-km").textContent = Math.round(km);
+    $("ft-title").textContent = made ? "You made it to Croke Park. All-Ireland final day." :
+      m === road.marks[0] ? `You didn't get far past ${home.name} today.` : `You got as far as ${m.name}.`;
+    $("ft-km").innerHTML = `<b>${Math.round(done)}</b> of ${Math.round(road.total)} km from ${esc(home.name)}`;
     $("ft-list").innerHTML = todays.map((id, i) => {
       const a = state.answers[id], t = L.tierById(a.tier);
       const ans = a.entity ? `${L.EBY[a.entity].label} · ${pct(a.share)}` : "Out of time";
-      return `<li><div><div class="q">${i + 1}. ${esc(L.QBY[id].text)}</div><div class="a">${esc(ans)}</div></div><div class="t ${a.tier}">${a.entity ? t.name : "Wide"}<br>+${a.km} km</div></li>`;
+      return `<li><div><div class="q">${i + 1}. ${esc(L.QBY[id].text)}</div><div class="a">${esc(ans)}</div></div><div class="t ${a.tier}">${a.entity ? t.name : "Wide"}</div></li>`;
     }).join("");
     $("share-text").textContent = shareText();
     $("copy-msg").textContent = "";
     show("fulltime");
-    frame(null, null);
+    if (sideBySide()) frame(null, null, "fulltime"); else frame(null, null);
+    RoadMap.showOverview(1400);
   }
   function shareText() {
-    const km = Math.round(totalKm()), stop = L.stopFor(km);
+    const done = Math.round(kmDone()), m = reached();
     const marks = todays.map(id => L.tierById(state.answers[id].tier).mark).join("");
-    return `Puckout #${roadNo} · ${km} km\n${km >= MAX_KM ? "Made it to Croke Park" : "Reached: " + stop.name}\n${marks}`;
+    const where = frac() >= 1 ? "Made it to Croke Park" : m === road.marks[0] ? "Still at the club gate" : `Got as far as ${m.name}`;
+    return `Puckout #${roadNo} · ${home.name} to Croke Park\n${done} of ${Math.round(road.total)} km · ${where}\n${marks}`;
   }
   $("copy").addEventListener("click", () => {
     const txt = shareText();
@@ -205,21 +307,26 @@
       try { const r = document.createRange(); r.selectNodeContents($("share-text")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {}
       $("copy-msg").textContent = "Select the text above to copy it";
     };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(txt).then(() => { $("copy-msg").textContent = "Copied"; }, fallback);
-    } else fallback();
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => { $("copy-msg").textContent = "Copied"; }, fallback);
+    else fallback();
   });
 
-  $("start").addEventListener("click", () => { const n = current(); n ? ask(n) : fullTime(); });
+  $("start").addEventListener("click", () => { if (!home) return; const n = current(); n ? ask(n) : fullTime(); });
 
   // ---------- Boot ----------
-  RoadMap.init($("map"), $("marks"), D.STOPS);
-  const startKm = totalKm();
-  RoadMap.jumpTo(startKm);
-  if (!current()) fullTime();
-  else {
-    renderIntro();
-    // First visit of the day: show where the road ends, then come back to the club.
-    if (!answered()) { RoadMap.jumpTo(0); RoadMap.pan(MAX_KM, 0, 2600); }
-  }
+  if (home) road = R.makeRoad(home, today);
+  renderIntro();
+  RoadMap.init($("map"), $("marks"), GEO, POI.POIS, POI.MOUNTAINS, POI.CROKER).then(() => {
+    if (road) {
+      RoadMap.setRoad(road);
+      RoadMap.frac = frac();
+      if (!current()) { fullTime(); return; }
+      renderIntro();
+      RoadMap.showOverview(0);
+    } else {
+      // No club picked yet: show the whole island
+      RoadMap.cam = RoadMap.islandCam();
+      RoadMap.draw();
+    }
+  });
 })();
