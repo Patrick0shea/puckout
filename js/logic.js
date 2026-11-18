@@ -2,13 +2,74 @@
  * Pure game logic: picking today's questions, recognising typed answers,
  * working out how rare an answer is and how far it carries you.
  * No DOM here, so it runs in Node for the tests too.
+ *
+ * Questions come from two places: the hand-written ones in js/data.js and
+ * the ones generated from real records in data/questions.js (players, clubs,
+ * captains, All Stars, county championships).
  */
 (function (root) {
   "use strict";
-  const D = typeof module !== "undefined" && module.exports ? require("./data.js") : root.PuckoutData;
+  const node = typeof module !== "undefined" && module.exports;
+  const D = node ? require("./data.js") : root.PuckoutData;
+  let G = null;
+  try { G = node ? (require("../data/questions.js"), globalThis.PuckoutQuestions) : root.PuckoutQuestions; } catch (e) { G = null; }
+  G = G || { people: [], clubs: [], questions: [] };
 
-  const QBY = Object.fromEntries(D.QUESTIONS.map(q => [q.id, q]));
-  const EBY = Object.fromEntries(D.ENTITIES.map(e => [e.id, e]));
+  const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/\bsaint\b/g, "st").replace(/[^a-z0-9 ]+/g, " ").replace(/\b(county|co|the|gaa|gac|clg)\b/g, " ").replace(/\s+/g, "");
+  const tokens = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/\bsaint\b/g, "st").replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+
+  // A few nicknames everyone uses. Keys are matched after norm().
+  const NICKNAMES = {
+    gooch: ["Colm Cooper", "Kerry"], thegooch: ["Colm Cooper", "Kerry"], jacko: ["Jack O'Shea", "Kerry"],
+    bomber: ["Eoin Liston", "Kerry"], cha: ["James Fitzpatrick", "Kilkenny"], jbm: ["Jimmy Barry-Murphy", "Cork"],
+    kingshefflin: ["Henry Shefflin", "Kilkenny"], kingHenry: ["Henry Shefflin", "Kilkenny"], starmccaffrey: ["Jack McCaffrey", "Dublin"]
+  };
+
+  // ---- Entities: hand-written (counties, positions, codes) plus generated people and clubs ----
+  const PARTICLES = new Set(["o", "mac", "mc", "de", "di", "ni", "ui", "nic", "van", "le", "la"]);
+  const GENERIC = new Set(["st", "naomh", "rangers", "shamrocks", "gaels", "emmets", "harps", "rovers", "og", "eire", "the",
+    "sarsfields", "celtic", "united", "hurling", "club", "football", "gaa", "gac", "clg", "cumann", "of", "and", "na", "an",
+    "young", "irelands", "pearses", "mitchels", "davitts", "kickhams", "geraldines", "wolfe", "tones", "erins", "own", "east",
+    "west", "north", "south", "mid"]);
+
+  const ENT = D.ENTITIES.map(e => ({ id: e.id, label: e.label, keys: e.aliases.map(norm).filter(Boolean), parts: [] }));
+  const personKeys = label => {
+    const t = tokens(label);
+    const keys = [t.join("")];
+    const noInitials = t.filter(x => x.length > 1);
+    if (noInitials.length >= 2) keys.push(noInitials.join(""));
+    let i = t.length - 1;
+    while (i > 0 && PARTICLES.has(t[i - 1])) i--;
+    const surname = t.slice(i).join("");
+    return { keys, parts: surname.length >= 4 ? [surname] : [] };
+  };
+  const clubKeys = label => {
+    const t = tokens(label.replace(/\(.*?\)/g, " "));
+    const keys = [t.join("")];
+    const sig = t.filter(x => !GENERIC.has(x) && x.length >= 4);
+    const parts = new Set(sig);
+    if (t.length >= 2) parts.add(t.slice(0, 2).join(""));
+    const commaHead = label.split(",")[0];
+    if (commaHead !== label) keys.push(norm(commaHead) + norm(label.split(",").slice(1).join("")));
+    return { keys, parts: [...parts].filter(p => !keys.includes(p)) };
+  };
+  G.people.forEach(p => { const k = personKeys(p.label); ENT.push({ id: p.id, label: p.label, county: p.county, keys: k.keys, parts: k.parts, kind: "person" }); });
+  G.clubs.forEach(c => { const k = clubKeys(c.label); ENT.push({ id: c.id, label: c.label, county: c.county, keys: k.keys, parts: k.parts, kind: "club" }); });
+  const EBY = Object.fromEntries(ENT.map(e => [e.id, e]));
+  for (const [nick, [name, county]] of Object.entries(NICKNAMES)) {
+    const e = ENT.find(x => x.kind === "person" && x.label === name && x.county === county);
+    if (e) e.keys.push(norm(nick));
+  }
+
+  const QUESTIONS = D.QUESTIONS.concat(G.questions);
+  const QBY = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+
+  const INDEX = [];
+  ENT.forEach(e => e.keys.forEach(k => INDEX.push([k, e.id])));
+  const PARTS = {};
+  ENT.forEach(e => e.parts.forEach(k => { (PARTS[k] = PARTS[k] || new Set()).add(e.id); }));
 
   // ---- Days ----
   function irishDate(now = new Date()) {
@@ -32,22 +93,38 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
-  function questionsFor(date) {
+
+  // How many of each kind of question can appear in one day.
+  const GROUP = { "All Stars": "stars", "Dual stars": "stars", Awards: "awards", Captains: "captains", Clubs: "clubs",
+    Football: "classic", Hurling: "classic", "Football & hurling": "classic", Geography: "classic", "The game": "classic", History: "classic" };
+  const CAP = { stars: 2, awards: 1, captains: 1, clubs: 2, classic: 2 };
+
+  // Seven questions: six everyone shares, plus one about the player's own
+  // county's club championship when there is one (otherwise a seventh shared one).
+  function questionsFor(date, county) {
     const rnd = seeded("puckout:" + date);
-    const ids = D.QUESTIONS.map(q => q.id);
-    for (let i = ids.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1));
-      [ids[i], ids[j]] = [ids[j], ids[i]];
+    const pool = QUESTIONS.filter(q => q.cat !== "Your county").map(q => q.id);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const own = county ? QUESTIONS.filter(q => q.cat === "Your county" && q.county === county) : [];
+    const shared = own.length ? D.CONFIG.perDay - 1 : D.CONFIG.perDay;
+    const used = {};
+    const out = [];
+    const usedCat = {};
+    for (const id of pool) {
+      if (out.length >= shared) break;
+      const cat = QBY[id].cat, g = GROUP[cat] || "classic";
+      if ((used[g] || 0) >= (CAP[g] || 1)) continue;
+      if (g === "classic" && usedCat[cat]) continue; // one geography, one football-history question, and so on
+      used[g] = (used[g] || 0) + 1;
+      usedCat[cat] = true;
+      out.push(id);
     }
-    return ids.slice(0, D.CONFIG.perDay);
+    for (const id of pool) { if (out.length >= shared) break; if (!out.includes(id)) out.push(id); }
+    if (own.length) out.push(own[Math.floor(rnd() * own.length)].id);
+    return out;
   }
 
   // ---- Recognising answers ----
-  const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, " ").replace(/\b(county|co|the)\b/g, " ").replace(/\s+/g, "");
-  const INDEX = [];
-  D.ENTITIES.forEach(e => e.aliases.forEach(al => { const k = norm(al); if (k) INDEX.push([k, e.id]); }));
-
   function lev(a, b) {
     if (Math.abs(a.length - b.length) > 2) return 9;
     let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
@@ -60,23 +137,48 @@
     }
     return prev[b.length];
   }
-
-  // Returns an entity id, or null when the text can't be pinned to one thing.
-  // Typos are forgiven only when one candidate is clearly closest, so
-  // "Kery" is Kerry but nothing that sits between Kerry and Derry is guessed.
-  function identify(raw) {
-    const k = norm(raw);
-    if (!k) return null;
-    for (const [key, id] of INDEX) if (key === k) return id;
-    const tol = k.length >= 9 ? 2 : k.length >= 4 ? 1 : 0;
+  const tolerance = k => k.length >= 9 ? 2 : k.length >= 4 ? 1 : 0;
+  function closest(k, pairs) {
+    const tol = tolerance(k);
     if (!tol) return null;
     let best = null, bestD = 99, tie = false;
-    for (const [key, id] of INDEX) {
+    for (const [key, id] of pairs) {
       const d = lev(k, key);
       if (d < bestD) { best = id; bestD = d; tie = false; }
       else if (d === bestD && id !== best) tie = true;
     }
     return bestD <= tol && !tie ? best : null;
+  }
+
+  // Returns an entity id, or null when the text can't be pinned to one thing.
+  // Within a question, a surname or a club's short name is enough when only
+  // one answer fits ("Shefflin", "Crossmaglen"). Typos are forgiven only when
+  // one candidate is clearly closest, so "Kery" is Kerry but nothing that sits
+  // between Kerry and Derry is guessed.
+  function identify(raw, qid) {
+    const k = norm(raw);
+    if (!k) return null;
+    const q = qid && QBY[qid];
+    if (q) {
+      const ids = Object.keys(q.a).filter(id => EBY[id]);
+      for (const id of ids) if (EBY[id].keys.includes(k)) return id;
+      const part = ids.filter(id => EBY[id].parts.includes(k));
+      if (part.length === 1) return part[0];
+      const near = closest(k, ids.flatMap(id => EBY[id].keys.map(key => [key, id])));
+      if (near) return near;
+    }
+    for (const [key, id] of INDEX) if (key === k) return id;
+    if (PARTS[k] && PARTS[k].size === 1) return [...PARTS[k]][0];
+    if (PARTS[k]) return null;
+    return closest(k, INDEX);
+  }
+
+  // When a surname or short name fits more than one answer ("Clifford",
+  // "Ó Sé"), the names it could be, so the game can ask for a first name.
+  function candidates(raw, qid) {
+    const k = norm(raw), q = QBY[qid];
+    if (!k || !q) return [];
+    return Object.keys(q.a).filter(id => EBY[id] && EBY[id].parts.includes(k)).map(id => EBY[id].label);
   }
 
   // ---- Rarity ----
@@ -96,8 +198,9 @@
   }
   const tierFor = share => D.TIERS.find(t => share < t.max);
   const tierById = id => D.TIERS.find(t => t.id === id) || D.WIDE;
+  const label = id => (EBY[id] ? EBY[id].label : id);
 
-  const api = { QBY, EBY, irishDate, dayNumber, questionsFor, identify, shares, tierFor, tierById, norm, seeded };
-  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  const api = { QBY, EBY, QUESTIONS, irishDate, dayNumber, questionsFor, identify, candidates, shares, tierFor, tierById, norm, seeded, label };
+  if (node) module.exports = api;
   else root.PuckoutLogic = api;
 })(typeof window !== "undefined" ? window : globalThis);

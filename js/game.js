@@ -9,7 +9,7 @@
 
   const today = L.irishDate();
   const roadNo = L.dayNumber(today);
-  const todays = L.questionsFor(today);
+  let todays = [];
   const KEY = "puckout:v2:" + today;
   const HOME_KEY = "puckout:home";
 
@@ -23,6 +23,9 @@
   const save = () => store.set(KEY, state);
   let home = store.get(HOME_KEY);
   let road = null;
+  // Six questions everyone shares, plus one on the player's own county's club championship.
+  const pickQuestions = () => { todays = L.questionsFor(today, home && home.county); };
+  pickQuestions();
 
   const answered = () => todays.filter(id => state.answers[id]).length;
   const current = () => todays.find(id => !state.answers[id]) || null;
@@ -59,6 +62,7 @@
   function setHome(h) {
     home = h;
     store.set(HOME_KEY, h);
+    pickQuestions();
     road = R.makeRoad(home, today);
     RoadMap.setRoad(road);
     RoadMap.frac = frac();
@@ -170,7 +174,7 @@
   function ask(qid) {
     activeQ = qid;
     const q = L.QBY[qid];
-    $("q-cat").textContent = q.cat;
+    $("q-cat").textContent = q.cat === "Your county" ? `Your county · ${q.county}` : q.cat;
     $("q-text").textContent = q.text;
     $("q-hint").textContent = q.hint || "";
     $("guess").value = "";
@@ -207,9 +211,14 @@
     if (!activeQ) return;
     const raw = $("guess").value.trim();
     if (!raw) return;
-    const id = L.identify(raw);
+    const id = L.identify(raw, activeQ);
     const q = L.QBY[activeQ];
-    if (!id) { setMsg(`We don't recognise "${raw}". Check the spelling.`, true); shake(); return; }
+    if (!id) {
+      const c = L.candidates(raw, activeQ);
+      if (c.length > 1) setMsg(`More than one fits: ${c.slice(0, 3).join(", ")}${c.length > 3 ? "…" : ""}. Add the first name.`, true);
+      else setMsg(`We don't recognise "${raw}". Check the spelling.`, true);
+      shake(); return;
+    }
     if (q.a[id] === undefined) {
       const m = state.misses[activeQ] = state.misses[activeQ] || [];
       if (!m.includes(id)) { m.push(id); save(); }
@@ -258,7 +267,7 @@
     const max = rows[0][1];
     const shown = rows.filter(([id], i) => i < 5 || id === a.entity);
     const row = ([id, s]) =>
-      `<li class="${id === a.entity ? "you" : ""}"><span class="nm">${esc(L.EBY[id].label)}</span><span class="bar"><i style="width:${(s / max * 100).toFixed(1)}%"></i></span><span class="pct">${pct(s)}</span></li>`;
+      `<li class="${id === a.entity ? "you" : ""}"><span class="nm">${esc(L.EBY[id].label)}${L.EBY[id].county && !q.county ? `<small> ${esc(L.EBY[id].county)}</small>` : ""}</span><span class="bar"><i style="width:${(s / max * 100).toFixed(1)}%"></i></span><span class="pct">${pct(s)}</span></li>`;
     $("dist").innerHTML = shown.map(row).join("") +
       (rows.length > shown.length ? `<li class="more"><button type="button" id="show-all">Show all ${rows.length} answers</button></li>` : "");
     const all = $("show-all");

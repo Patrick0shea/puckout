@@ -176,8 +176,9 @@ button, input { font: inherit; }
 .gain { font-family: var(--serif); font-weight: 800; font-size: 1.9rem; line-height: 1; }
 .said { margin: 0; font-size: 1rem; }
 .dist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.dist li { display: grid; grid-template-columns: minmax(0, 8.5rem) 1fr 3rem; gap: 10px; align-items: center; font-size: .9rem; }
+.dist li { display: grid; grid-template-columns: minmax(0, 12rem) 1fr 3rem; gap: 10px; align-items: center; font-size: .9rem; }
 .dist .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dist .nm small { color: var(--muted); font-size: .78rem; }
 .dist .bar { height: 9px; border-radius: 5px; background: rgba(23, 35, 29, .07); position: relative; overflow: hidden; }
 .dist .bar i { position: absolute; inset: 0 auto 0 0; background: #b9c4b3; border-radius: 5px; min-width: 3px; }
 .dist li.you .bar i { background: var(--amber); }

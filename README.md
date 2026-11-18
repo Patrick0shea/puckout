@@ -41,14 +41,41 @@ To publish it on GitHub Pages: Settings → Pages → Deploy from a branch → `
 | `js/route.js` | Picks today's stops between your club and Croke Park and smooths a road through them |
 | `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
 | `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
-| `data/*.js` | Generated map, club and town data (see below) |
-| `tools/build_data.py` | Rebuilds `data/` from open data |
+| `data/*.js` | Generated map, club, town and question data (see below) |
+| `tools/build_data.py` | Rebuilds the map, club and town data |
+| `tools/build_questions.py` | Rebuilds `data/questions.js` from GAA records on Wikipedia |
 | `styles.css` | Look and layout |
 | `test/` | Logic and route tests (`node --test`) |
 
+## Where the questions come from
+
+Most questions are generated from real GAA records by `tools/build_questions.py`, which reads Wikipedia's GAA list pages (CC BY-SA):
+
+| Source | Questions it makes |
+| --- | --- |
+| Every football and hurling All Star team since 1971 | All Stars by county, goalkeepers, five or more All Stars, by decade, counties with few winners, dual All Stars |
+| GAA/GPA Footballer and Hurler of the Year | Winners since 1995 |
+| All-Ireland winning captains, with their clubs | Captains since 1975, captains who also won All Stars, clubs that produced a winning captain |
+| All-Ireland Senior Club Championship finals | Club winners overall and by province, beaten finalists who never won |
+| County senior championship finals (32 football, 20 hurling) | "Name a club that has won the Kerry Senior Football Championship" and so on |
+
+That's 110 generated questions and 14 hand-written ones (counties, provinces, positions). Each day, six are shared by everyone and the seventh is about your own county's club championship.
+
+Starting estimates of how often each answer is given come from the same records: players with more All Stars, awards and captaincies (and more recent ones) count as common answers, deep cuts as rare. Clubs work the same way, by titles and how recently they won.
+
+Players can be named in full, by surname when only one answer fits ("Shefflin"), or by a well-known nickname ("Gooch"). If a surname fits more than one answer ("Spillane"), the game asks for the first name. Real players or clubs that don't fit the question are recognised and marked wrong rather than "not recognised".
+
+To rebuild after a season ends:
+
+```bash
+python3 tools/build_questions.py --cache ~/.cache/puckout-wiki
+```
+
+Discipline stats (red cards, black cards) aren't published in any open source, so there are no questions on them.
+
 ## Adding questions
 
-Add an entry to `QUESTIONS` in `js/data.js`:
+Generated questions are rebuilt by the script above. To add a hand-written one, add an entry to `QUESTIONS` in `js/data.js`:
 
 ```js
 { id: "connacht", cat: "Geography",
