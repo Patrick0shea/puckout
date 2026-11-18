@@ -38,21 +38,22 @@
         <button id="change-club" class="btn-link" type="button">Change</button>
       </div>
       <p id="road-line" class="road-line" hidden></p>
-      <button id="start" class="btn-sign" type="button" hidden>Start today's road</button>
+      <button id="start" class="btn-sign" type="button" hidden>Start the road</button>
+      <button id="new-road" class="btn-link" type="button" hidden>Start a new road instead</button>
       <details class="howto">
         <summary>How to play</summary>
         <ol>
-          <li>Everyone gets the same seven GAA questions each day.</li>
+          <li>Each road has seven GAA questions. Play as many roads as you like.</li>
           <li>Each question has lots of right answers. Name one before the 30-second clock runs out.</li>
           <li>The fewer people who give your answer, the further down the road from your club it takes you. Wrong answers cost nothing, so keep guessing.</li>
-          <li>Along the way you pass county grounds, the home clubs of legends and famous sights. The stops change every day.</li>
+          <li>Along the way you pass county grounds, the home clubs of legends and famous sights. Every road has different stops.</li>
           <li>Seven All-Star answers gets you all the way to Croke Park.</li>
         </ol>
         <table class="tiers" id="tier-table"></table>
       </details>
       <div class="dock-foot">
         <span class="road-no" id="road-no">Road #1</span>
-        <span class="small">New road every day at midnight, Irish time</span>
+        <span class="small">Play as many roads as you like</span>
       </div>
       <p class="credit">Map data © OpenStreetMap contributors, Natural Earth, GeoNames. Clubs from Wikidata. Records from Wikipedia (CC BY-SA).</p>
     </div>
@@ -105,13 +106,14 @@
     <p class="eyebrow">Full time · <span id="ft-road">Road #1</span></p>
     <h2 class="ft-title" id="ft-title">You reached the County final</h2>
     <p class="ft-km" id="ft-km"></p>
+    <button id="again" class="btn-sign" type="button">Play again</button>
+    <p class="small again-note">A new road with different stops and seven new questions.</p>
     <ol class="ft-list" id="ft-list"></ol>
     <pre class="share" id="share-text"></pre>
     <div class="ft-actions">
       <span class="small" id="copy-msg"></span>
-      <button id="copy" class="btn-sign btn-small" type="button">Copy result</button>
+      <button id="copy" class="btn-ghost" type="button">Copy result</button>
     </div>
-    <p class="small">A new road opens at midnight, Irish time.</p>
   </section>
 
   <script src="data/geo.js"></script>

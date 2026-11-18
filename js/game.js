@@ -7,25 +7,54 @@
   const SECS = D.CONFIG.secondsPerQuestion;
   const MAX = D.CONFIG.maxPoints;
 
-  const today = L.irishDate();
-  const roadNo = L.dayNumber(today);
-  let todays = [];
-  const KEY = "puckout:v2:" + today;
-  const HOME_KEY = "puckout:home";
+  const HOME_KEY = "puckout:home", ROUND_KEY = "puckout:round", SEEN_KEY = "puckout:seen";
 
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: play without saving */ } }
   };
 
-  // ---------- Saved state ----------
-  let state = Object.assign({ answers: {}, started: {}, misses: {} }, store.get(KEY) || {});
-  const save = () => store.set(KEY, state);
+  // ---------- Rounds ----------
+  // Play as many rounds as you like. Each round has its own seven questions
+  // (recently played ones go to the back of the queue) and its own road.
+  let round = store.get(ROUND_KEY) || 1;
+  const seed = () => "round-" + round;
+  const roundKey = () => "puckout:v3:" + round;
+  let todays = [];
+  let state;
+  const freshState = () => ({ answers: {}, started: {}, misses: {}, questions: null });
+  const save = () => store.set(roundKey(), state);
   let home = store.get(HOME_KEY);
   let road = null;
-  // Six questions everyone shares, plus one on the player's own county's club championship.
-  const pickQuestions = () => { todays = L.questionsFor(today, home && home.county); };
-  pickQuestions();
+  function loadRound() {
+    state = Object.assign(freshState(), store.get(roundKey()) || {});
+    pickQuestions();
+  }
+  // Six shared questions plus one on the player's own county's club championship.
+  // Fixed for the round once picked, so changing club mid-round keeps your answers.
+  function pickQuestions() {
+    if (state.questions && !answeredIn(state.questions)) state.questions = null;
+    if (!state.questions) {
+      state.questions = L.questionsFor(seed(), home && home.county, store.get(SEEN_KEY) || []);
+      save();
+    }
+    todays = state.questions;
+  }
+  const answeredIn = qs => qs.some(id => state.answers[id]);
+  function newRound() {
+    const seen = (store.get(SEEN_KEY) || []).concat(todays).slice(-70);
+    store.set(SEEN_KEY, seen);
+    round += 1;
+    store.set(ROUND_KEY, round);
+    state = freshState();
+    pickQuestions();
+    road = R.makeRoad(home, seed());
+    RoadMap.setRoad(road);
+    RoadMap.frac = 0;
+    renderIntro();
+    RoadMap.showOverview(1200);
+  }
+  loadRound();
 
   const answered = () => todays.filter(id => state.answers[id]).length;
   const current = () => todays.find(id => !state.answers[id]) || null;
@@ -63,7 +92,7 @@
     home = h;
     store.set(HOME_KEY, h);
     pickQuestions();
-    road = R.makeRoad(home, today);
+    road = R.makeRoad(home, seed());
     RoadMap.setRoad(road);
     RoadMap.frac = frac();
     renderIntro();
@@ -148,7 +177,7 @@
 
   // ---------- Intro ----------
   function renderIntro() {
-    $("road-no").textContent = `Road #${roadNo}`;
+    $("road-no").textContent = `Road #${round}`;
     $("tier-table").innerHTML = D.TIERS.map((t, i) => {
       const range = t.max === Infinity ? `${Math.round(D.TIERS[i - 1].max * 100)}% or more give it` : i === 0 ? `Under ${Math.round(t.max * 100)}% give it` : `${Math.round(D.TIERS[i - 1].max * 100)}–${Math.round(t.max * 100)}%`;
       return `<tr><td><b>${t.name}</b></td><td class="small">${range}</td><td>${Math.round(t.pts / MAX * 1000) / 10}% of the road</td></tr>`;
@@ -159,9 +188,10 @@
       $("home-name").textContent = home.name;
       $("home-county").textContent = `${home.kind === "club" ? "Club" : "Town"} · ${home.county}`;
       const via = road.marks.slice(1, -1).map(m => m.name);
-      $("road-line").innerHTML = `Today's road: <b>${Math.round(road.total)} km</b> to Croke Park, by way of ${esc(via.join(", "))}.`;
-      $("start").textContent = answered() ? "Back on the road" : "Start today's road";
-      $("today-line").textContent = answered() ? `You're ${Math.round(kmDone())} km down today's road` : "From your club to Croke Park";
+      $("road-line").innerHTML = `This road: <b>${Math.round(road.total)} km</b> to Croke Park, by way of ${esc(via.join(", "))}.`;
+      $("start").textContent = answered() ? "Back on the road" : "Start the road";
+      $("today-line").textContent = answered() ? `You're ${Math.round(kmDone())} km down this road` : "From your club to Croke Park";
+      $("new-road").hidden = !answered();
     } else {
       $("today-line").textContent = "From your club to Croke Park";
     }
@@ -183,6 +213,7 @@
     renderHud();
     show("hud", "question", "shotbar");
     frame("question", "shotbar");
+    RoadMap.frac = frac(); // in case the last move was cut short by a quick click
     RoadMap.zoomToPin(900);
     if (!state.started[qid]) { state.started[qid] = Date.now(); save(); }
     deadline = state.started[qid] + SECS * 1000;
@@ -289,9 +320,9 @@
   }
   function fullTime() {
     const done = kmDone(), m = reached(), made = frac() >= 1;
-    $("ft-road").textContent = `Road #${roadNo}`;
+    $("ft-road").textContent = `Road #${round}`;
     $("ft-title").textContent = made ? "You made it to Croke Park. All-Ireland final day." :
-      m === road.marks[0] ? `You didn't get far past ${home.name} today.` : `You got as far as ${m.name}.`;
+      m === road.marks[0] ? `You didn't get far past ${home.name} this time.` : `You got as far as ${m.name}.`;
     $("ft-km").innerHTML = `<b>${Math.round(done)}</b> of ${Math.round(road.total)} km from ${esc(home.name)}`;
     $("ft-list").innerHTML = todays.map((id, i) => {
       const a = state.answers[id], t = L.tierById(a.tier);
@@ -302,13 +333,14 @@
     $("copy-msg").textContent = "";
     show("fulltime");
     if (sideBySide()) frame(null, null, "fulltime"); else frame(null, null);
+    RoadMap.frac = frac();
     RoadMap.showOverview(1400);
   }
   function shareText() {
     const done = Math.round(kmDone()), m = reached();
     const marks = todays.map(id => L.tierById(state.answers[id].tier).mark).join("");
     const where = frac() >= 1 ? "Made it to Croke Park" : m === road.marks[0] ? "Still at the club gate" : `Got as far as ${m.name}`;
-    return `Puckout #${roadNo} · ${home.name} to Croke Park\n${done} of ${Math.round(road.total)} km · ${where}\n${marks}`;
+    return `Puckout road #${round} · ${home.name} to Croke Park\n${done} of ${Math.round(road.total)} km · ${where}\n${marks}`;
   }
   $("copy").addEventListener("click", () => {
     const txt = shareText();
@@ -321,9 +353,11 @@
   });
 
   $("start").addEventListener("click", () => { if (!home) return; const n = current(); n ? ask(n) : fullTime(); });
+  $("again").addEventListener("click", () => { clearInterval(timer); newRound(); });
+  $("new-road").addEventListener("click", () => { clearInterval(timer); newRound(); });
 
   // ---------- Boot ----------
-  if (home) road = R.makeRoad(home, today);
+  if (home) road = R.makeRoad(home, seed());
   renderIntro();
   RoadMap.init($("map"), $("marks"), GEO, POI.POIS, POI.MOUNTAINS, POI.CROKER).then(() => {
     if (road) {

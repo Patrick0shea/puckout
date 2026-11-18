@@ -101,10 +101,16 @@
 
   // Seven questions: six everyone shares, plus one about the player's own
   // county's club championship when there is one (otherwise a seventh shared one).
-  function questionsFor(date, county) {
+  // `seen` (optional): question ids played recently. They go to the back of
+  // the queue, so back-to-back rounds don't repeat questions.
+  function questionsFor(date, county, seen) {
     const rnd = seeded("puckout:" + date);
-    const pool = QUESTIONS.filter(q => q.cat !== "Your county").map(q => q.id);
+    let pool = QUESTIONS.filter(q => q.cat !== "Your county").map(q => q.id);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    if (seen && seen.length) {
+      const old = new Set(seen);
+      pool = pool.filter(id => !old.has(id)).concat(pool.filter(id => old.has(id)));
+    }
     const own = county ? QUESTIONS.filter(q => q.cat === "Your county" && q.county === county) : [];
     const shared = own.length ? D.CONFIG.perDay - 1 : D.CONFIG.perDay;
     const used = {};
@@ -120,7 +126,11 @@
       out.push(id);
     }
     for (const id of pool) { if (out.length >= shared) break; if (!out.includes(id)) out.push(id); }
-    if (own.length) out.push(own[Math.floor(rnd() * own.length)].id);
+    if (own.length) {
+      const fresh = seen ? own.filter(q => !seen.includes(q.id)) : own;
+      const from = fresh.length ? fresh : own;
+      out.push(from[Math.floor(rnd() * from.length)].id);
+    }
     return out;
   }
 

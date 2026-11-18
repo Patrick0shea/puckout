@@ -74,3 +74,11 @@ test("a club named on the wrong question is still recognised as that club", () =
   const id = L.identify("Nemo", "as-hurling-kilkenny");
   assert.equal(L.label(id), "Nemo Rangers");
 });
+
+test("back-to-back rounds don't repeat questions", () => {
+  const first = L.questionsFor("round-1", "Kerry");
+  const second = L.questionsFor("round-2", "Kerry", first);
+  assert.equal(second.length, 7);
+  assert.equal(second.slice(0, 6).filter(id => first.includes(id)).length, 0, "no shared question repeats");
+  assert.notEqual(second[6], first[6], "Kerry has a football and a hurling championship question, so the county one changes too");
+});

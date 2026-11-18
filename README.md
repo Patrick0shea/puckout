@@ -1,12 +1,12 @@
 # Puckout
 
-A daily GAA quiz. Pick your home club, then answer seven questions. Every question has lots of right answers, and the fewer people who give yours, the further it carries you along a road across a cartoon map of Ireland, from your club to Croke Park.
+A GAA quiz you can play as often as you like. Pick your home club, then answer seven questions. Every question has lots of right answers, and the fewer people who give yours, the further it carries you along a road across a cartoon map of Ireland, from your club to Croke Park.
 
 ## How it plays
 
 - **Pick your club.** Search more than 700 clubs, or any of about 8,800 towns, villages and parishes if your club isn't listed yet. Your choice is remembered.
-- **Today's road.** The road runs from your club to Croke Park, past a handful of places on the way: county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, Hayes' Hotel, Newgrange). The stops change every day. Clubs close to Croke Park get a day trip out through the neighbouring counties and back.
-- **Seven questions a day**, the same for everyone, picked by date (Irish time). You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
+- **The road.** Each road runs from your club to Croke Park, past a handful of places on the way: county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, Hayes' Hotel, Newgrange). Every road has different stops. Clubs close to Croke Park get a day trip out through the neighbouring counties and back.
+- **Seven questions per road.** You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
 - Typos are forgiven when the answer is clear: `kery` counts as Kerry and `Co. Tipp` as Tipperary. Nicknames such as `Dubs`, `Cats` and `Deise` work too.
 - **The rarer the answer, the further you go:**
 
@@ -20,6 +20,7 @@ A daily GAA quiz. Pick your home club, then answer seven questions. Every questi
 | Wide | out of time | 0 |
 
 - Seven All-Star answers gets you all the way to Croke Park. As you pass each place you get a postcard about it. At full time you see how far you got and a result you can copy and share.
+- **Play again** as often as you like. Each round is a new road with new stops and new questions, and your progress on an unfinished road is kept if you close the page.
 
 ## Running it
 
@@ -36,9 +37,9 @@ To publish it on GitHub Pages: Settings → Pages → Deploy from a branch → `
 | File | What it does |
 | --- | --- |
 | `js/data.js` | The question pool, everything a player might type (with aliases) and the tiers |
-| `js/logic.js` | Picks today's questions, recognises typed answers, works out rarity. No DOM, so the tests run in Node |
+| `js/logic.js` | Picks each road's questions, recognises typed answers, works out rarity. No DOM, so the tests run in Node |
 | `js/pois.js` | The places a road can pass: county grounds, legends' clubs and landmarks, each with a one-line postcard |
-| `js/route.js` | Picks today's stops between your club and Croke Park and smooths a road through them |
+| `js/route.js` | Picks each road's stops between your club and Croke Park and smooths a road through them |
 | `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
 | `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
 | `data/*.js` | Generated map, club, town and question data (see below) |
@@ -59,7 +60,7 @@ Most questions are generated from real GAA records by `tools/build_questions.py`
 | All-Ireland Senior Club Championship finals | Club winners overall and by province, beaten finalists who never won |
 | County senior championship finals (32 football, 20 hurling) | "Name a club that has won the Kerry Senior Football Championship" and so on |
 
-That's 110 generated questions and 14 hand-written ones (counties, provinces, positions). Each day, six are shared by everyone and the seventh is about your own county's club championship.
+That's 110 generated questions and 14 hand-written ones (counties, provinces, positions). Each road has six general questions and a seventh about your own county's club championship. Questions you've played recently go to the back of the queue, so new rounds don't repeat.
 
 Starting estimates of how often each answer is given come from the same records: players with more All Stars, awards and captaincies (and more recent ones) count as common answers, deep cuts as rare. Clubs work the same way, by titles and how recently they won.
 
