@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Puckout</title>
+  <meta name="description" content="A daily GAA quiz. Seven questions, rarer answers go further on the road from your club pitch to Croke Park.">
+  <meta name="theme-color" content="#00693b">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Overpass:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="map" aria-hidden="true"></canvas>
+  <div id="marks" aria-hidden="true"></div>
+  <div class="fade-top" aria-hidden="true"></div>
+
+  <!-- Opening screen -->
+  <section id="intro" class="screen">
+    <div class="masthead">
+      <h1 class="logo">Puckout</h1>
+      <p class="eyebrow">The road to Croker</p>
+      <p class="sub">7 questions · 30 seconds each · rarer answers go further</p>
+      <p class="today" id="today-line">Today: your club pitch to Croke Park</p>
+    </div>
+    <div class="dock card" id="intro-dock">
+      <button id="start" class="btn-sign" type="button">Start today's road</button>
+      <details class="howto">
+        <summary>How to play</summary>
+        <ol>
+          <li>Everyone gets the same seven GAA questions each day.</li>
+          <li>Each question has lots of right answers. Name one before the 30-second clock runs out.</li>
+          <li>The fewer people who give your answer, the further down the road it takes you. Wrong answers cost nothing, so keep guessing.</li>
+          <li>Seven All-Star answers gets you all the way to Croke Park.</li>
+        </ol>
+        <table class="tiers" id="tier-table"></table>
+      </details>
+      <div class="dock-foot">
+        <span class="road-no" id="road-no">Road #1</span>
+        <span class="small">New road every day at midnight, Irish time</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- In play -->
+  <header id="hud" class="hud" hidden>
+    <div class="km"><span id="km">0</span><small>km</small></div>
+    <div class="pips-wrap">
+      <div class="pips" id="pips"></div>
+      <div class="qcount" id="qcount">Question 1 of 7</div>
+    </div>
+    <div class="next-sign" id="next-sign"><span aria-hidden="true">↑</span> <b id="next-name">Divisional final</b> <em id="next-km">120</em></div>
+  </header>
+
+  <section id="question" class="qcard card" hidden aria-live="polite">
+    <p class="cat" id="q-cat">Football</p>
+    <h2 class="qtext" id="q-text"></h2>
+    <p class="qhint" id="q-hint"></p>
+  </section>
+
+  <section id="shotbar" class="shotbar" hidden>
+    <form id="shoot" class="shoot card" autocomplete="off">
+      <div class="clock" aria-label="Seconds left">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="clock-bg" cx="22" cy="22" r="19"/><circle class="clock-fg" id="clock-fg" cx="22" cy="22" r="19"/></svg>
+        <span id="clock-n">30</span>
+      </div>
+      <label for="guess" class="visually-hidden">Your answer</label>
+      <input id="guess" name="guess" type="text" placeholder="Your answer" autocapitalize="words" spellcheck="false" enterkeyhint="go">
+      <button type="submit" class="btn-go">Go</button>
+    </form>
+    <p class="msg" id="msg">Wrong answers don't cost anything.</p>
+    <div class="misses" id="misses"></div>
+  </section>
+
+  <section id="result" class="result card" hidden aria-live="polite">
+    <div class="verdict">
+      <div class="badge" id="badge">Senior</div>
+      <div class="gain" id="gain">+45 km</div>
+    </div>
+    <p class="said" id="said"></p>
+    <ul class="dist" id="dist"></ul>
+    <p class="fact" id="fact"></p>
+    <button id="next" class="btn-sign btn-small" type="button">Next question</button>
+  </section>
+
+  <!-- Full time -->
+  <section id="fulltime" class="ft card" hidden>
+    <p class="eyebrow">Full time · <span id="ft-road">Road #1</span></p>
+    <h2 class="ft-title" id="ft-title">You reached the County final</h2>
+    <p class="ft-km"><b id="ft-km">0</b> of 700 km</p>
+    <ol class="ft-list" id="ft-list"></ol>
+    <pre class="share" id="share-text"></pre>
+    <div class="ft-actions">
+      <span class="small" id="copy-msg"></span>
+      <button id="copy" class="btn-sign btn-small" type="button">Copy result</button>
+    </div>
+    <p class="small">A new road opens at midnight, Irish time.</p>
+  </section>
+
+  <script src="js/data.js"></script>
+  <script src="js/logic.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

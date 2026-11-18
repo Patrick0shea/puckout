@@ -1,0 +1,11 @@
+{
+  "name": "puckout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A daily GAA quiz: rarer answers carry you further on the road from your club pitch to Croke Park.",
+  "scripts": {
+    "start": "npx --yes serve -l 8080 .",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "UNLICENSED"
+}
