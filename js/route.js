@@ -52,10 +52,12 @@
       for (let i = cands.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [cands[i], cands[j]] = [cands[j], cands[i]]; }
       const byKind = { statue: [], legend: [], ground: [], landmark: [] };
       cands.forEach(x => byKind[x.p.kind].push(x));
-      // GAA places first: statues and legends' clubs, then grounds, then sights.
+      // Take kinds in turn, starting from a different one each road, so
+      // a lone statue nearby doesn't turn up on every road in the region.
       const kinds = ["statue", "legend", "ground", "landmark"];
+      const offset = Math.floor(rnd() * kinds.length);
       for (let k = 0; chosen.length < want && kinds.some(kd => byKind[kd].length); k++) {
-        const x = byKind[kinds[k % 4]].shift();
+        const x = byKind[kinds[(k + offset) % 4]].shift();
         if (!x || x.t < 0.06 || x.t > 0.96) continue;
         if (chosen.some(c => Math.abs(c.t - x.t) < gap || km(c.p, x.p) < 12)) continue;
         chosen.push(x);

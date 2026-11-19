@@ -28,6 +28,8 @@
     { id: "pearse-longford", kind: "ground", name: "Pearse Park", lat: 53.7305, lon: -7.7900, tag: "Longford", line: "Longford's county ground." },
     { id: "tailteann", kind: "ground", name: "Páirc Tailteann", lat: 53.6495, lon: -6.6830, tag: "Navan", line: "Meath's county ground, in Navan." },
     { id: "conleths", kind: "ground", name: "St Conleth's Park", lat: 53.1795, lon: -6.7990, tag: "Newbridge", line: "Kildare's county ground, in Newbridge." },
+    { id: "tierney", kind: "ground", name: "Fr Tierney Park", lat: 54.5030, lon: -8.1880, tag: "Ballyshannon", line: "Aodh Ruadh's home in Ballyshannon, opened in 1954 and a regular league venue for Donegal." },
+    { id: "odonnell", kind: "ground", name: "O'Donnell Park", lat: 54.9470, lon: -7.7500, tag: "Letterkenny", line: "St Eunan's ground in Letterkenny, home of Donegal's hurlers and a former county football venue." },
     { id: "pearse-galway", kind: "ground", name: "Pearse Stadium", lat: 53.2595, lon: -9.0860, tag: "Salthill", line: "Galway's home, a stone's throw from Salthill prom." },
     { id: "machale", kind: "ground", name: "MacHale Park", lat: 53.8525, lon: -9.3050, tag: "Castlebar", line: "Mayo's county ground, in Castlebar." },
     { id: "hyde", kind: "ground", name: "Dr Hyde Park", lat: 53.6265, lon: -8.1850, tag: "Roscommon", line: "Roscommon's county ground." },
@@ -38,8 +40,8 @@
     { id: "healy", kind: "ground", name: "Healy Park", lat: 54.5980, lon: -7.2900, tag: "Omagh", line: "Tyrone's county ground, in Omagh." },
     { id: "athletic-grounds", kind: "ground", name: "Athletic Grounds", lat: 54.3470, lon: -6.6660, tag: "Armagh", line: "Armagh's county ground." },
     { id: "celtic-park", kind: "ground", name: "Celtic Park", lat: 54.9885, lon: -7.3390, tag: "Derry", line: "Derry's county ground." },
-    { id: "maccumhaill", kind: "ground", name: "MacCumhaill Park", lat: 54.8010, lon: -7.7860, tag: "Ballybofey", line: "Donegal's county ground, in Ballybofey." },
-    { id: "brewster", kind: "ground", name: "Brewster Park", lat: 54.3495, lon: -7.6350, tag: "Enniskillen", line: "Fermanagh's county ground, in Enniskillen." },
+    { id: "maccumhaill", kind: "ground", name: "MacCumhaill Park", lat: 54.8010, lon: -7.7860, tag: "Ballybofey", line: "Donegal's county ground, in Ballybofey, on the banks of the Finn." },
+    { id: "brewster", kind: "ground", name: "Brewster Park", lat: 54.3495, lon: -7.6350, tag: "Enniskillen", line: "Fermanagh's county ground, in Enniskillen. In 2004 Fermanagh reached the All-Ireland semi-final and took Mayo to a replay." },
     { id: "esler", kind: "ground", name: "Páirc Esler", lat: 54.1810, lon: -6.3320, tag: "Newry", line: "Down's county ground, in Newry. In 1960 Down became the first team from Northern Ireland to win the Sam Maguire." },
     { id: "casement", kind: "ground", name: "Casement Park", lat: 54.5745, lon: -5.9775, tag: "Belfast", line: "Antrim's home ground, in west Belfast." },
 
@@ -79,6 +81,14 @@
     { id: "loughgiel", kind: "legend", name: "Loughgiel Shamrocks", lat: 55.0440, lon: -6.3300, tag: "club hurling champions", line: "Loughgiel Shamrocks, All-Ireland club hurling champions in 1983 and 2012." },
     { id: "cushendall", kind: "legend", name: "Cushendall", lat: 55.0803, lon: -6.0629, tag: "hurling in the Glens", line: "Cushendall, a hurling village in the Glens of Antrim. Ruairí Óg reached the All-Ireland club hurling final in 2016." },
     { id: "scotstown", kind: "legend", name: "Scotstown", lat: 54.2775, lon: -7.0650, tag: "Monaghan club", line: "Scotstown, Monaghan's great club side, who reached the All-Ireland club football final in 1979." },
+    { id: "ardara", kind: "legend", name: "Ardara", lat: 54.7644, lon: -8.4075, tag: "Anthony Molloy's home", line: "Ardara, home of Anthony Molloy, who lifted Donegal's first Sam Maguire in 1992 and told the crowd 'Sam's for the hills'." },
+    { id: "kilcar", kind: "legend", name: "Kilcar", lat: 54.6339, lon: -8.5933, tag: "the Wee Man's club", line: "Kilcar, home of Martin 'Wee Man' McHugh, Footballer of the Year when Donegal won the 1992 All-Ireland." },
+    { id: "glenties", kind: "legend", name: "Glenties", lat: 54.7975, lon: -8.2825, tag: "Jim McGuinness's club", line: "Glenties, home of Naomh Conaill and Jim McGuinness, who managed Donegal to the 2012 All-Ireland." },
+    { id: "bundoran", kind: "legend", name: "Bundoran", lat: 54.4778, lon: -8.2809, tag: "Brian McEniff's town", line: "Bundoran, where hotelier Brian McEniff, manager of Donegal's 1992 All-Ireland winners, still helps out at the local club." },
+    { id: "gaothdobhair", kind: "legend", name: "Gaoth Dobhair", lat: 55.0503, lon: -8.2319, tag: "2018 Ulster club champions", line: "Gaoth Dobhair, the Gaeltacht club whose 2018 Ulster club title was Donegal's first since 1975." },
+    { id: "rosslea", kind: "legend", name: "Rosslea", lat: 54.2333, lon: -7.1833, tag: "Peter McGinnity's club", line: "Rosslea, home of Peter McGinnity, Fermanagh's first All Star, in 1982." },
+    { id: "teemore", kind: "legend", name: "Teemore", lat: 54.1550, lon: -7.5000, tag: "Barry Owens's club", line: "Teemore Shamrocks, club of Barry Owens, Fermanagh's only two-time All Star (2004 and 2006)." },
+    { id: "ederney", kind: "legend", name: "Ederney", lat: 54.5325, lon: -7.6575, tag: "Martin McGrath's club", line: "Ederney, home of St Joseph's and Martin McGrath, an All Star at midfield in Fermanagh's great 2004 run." },
     { id: "skryne", kind: "legend", name: "Skryne", lat: 53.5830, lon: -6.5580, tag: "Colm O'Rourke's club", line: "Skryne, home club of Meath's Colm O'Rourke." },
 
     // ---- Statues of GAA greats, and where the GAA began ----
@@ -101,6 +111,11 @@
     { id: "davin", kind: "statue", name: "Davin Park", lat: 52.3492, lon: -7.4131, tag: "Carrick-on-Suir", line: "Davin Park, named for Maurice Davin, the GAA's first President." },
 
     // ---- Landmarks ----
+    { id: "aileach", kind: "landmark", name: "Grianán of Aileach", lat: 55.0236, lon: -7.4278, tag: "Inishowen", line: "Grianán of Aileach, the stone ring fort looking out over Lough Swilly and Lough Foyle." },
+    { id: "glenveagh", kind: "landmark", name: "Glenveagh Castle", lat: 55.0570, lon: -7.9400, tag: "Glenveagh National Park", line: "Glenveagh Castle, on the lake shore in Donegal's national park." },
+    { id: "marble-arch", kind: "landmark", name: "Marble Arch Caves", lat: 54.2590, lon: -7.8140, tag: "Co. Fermanagh", line: "The Marble Arch Caves, an underground river under the Fermanagh hills." },
+    { id: "devenish", kind: "landmark", name: "Devenish Island", lat: 54.3700, lon: -7.6600, tag: "Lough Erne", line: "Devenish Island, with its round tower and monastic ruins on Lower Lough Erne." },
+    { id: "belleek", kind: "landmark", name: "Belleek", lat: 54.4802, lon: -8.0943, tag: "on the Erne", line: "Belleek, home of the famous pottery, where the Erne crosses into Donegal." },
     { id: "navan-fort", kind: "landmark", name: "Navan Fort", lat: 54.3484, lon: -6.6973, tag: "Emain Macha", line: "Navan Fort, Emain Macha, seat of the ancient kings of Ulster. Legend says the young Setanta killed Culann's hound with a sliotar and became Cú Chulainn." },
     { id: "inniskeen", kind: "landmark", name: "Inniskeen", lat: 54.0000, lon: -6.5833, tag: "Patrick Kavanagh country", line: "Inniskeen, home of the poet Patrick Kavanagh, who kept goal for his local club." },
     { id: "hayes", kind: "statue", name: "Hayes' Hotel", lat: 52.6805, lon: -7.8135, tag: "where the GAA began", line: "Hayes' Hotel, Thurles, where the GAA was founded on 1 November 1884." },
