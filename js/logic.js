@@ -94,6 +94,10 @@
     };
   }
 
+  const isHurling = id => { const q = QBY[id]; return !!q && (q.cat === "Hurling" || /hurling|^shc-/.test(q.id)); };
+  const MIN_HURLING = 2;
+  const HURLING_COUNTIES = new Set(["Kilkenny", "Cork", "Tipperary", "Limerick", "Galway", "Clare", "Waterford", "Wexford", "Offaly", "Antrim", "Laois", "Dublin"]);
+
   // How many of each kind of question can appear in one day.
   const GROUP = { "All Stars": "stars", "Dual stars": "stars", Awards: "awards", Captains: "captains", Clubs: "clubs",
     Football: "classic", Hurling: "classic", "Football & hurling": "classic", Geography: "classic", "The game": "classic", History: "classic" };
@@ -126,9 +130,25 @@
       out.push(id);
     }
     for (const id of pool) { if (out.length >= shared) break; if (!out.includes(id)) out.push(id); }
+    // Every road has at least two hurling questions (and two football ones),
+    // swapping in from the shuffled pool when the draw came up one-sided.
+    for (const [want, fits] of [[isHurling, MIN_HURLING], [id => !isHurling(id), MIN_HURLING]]) {
+      let need = fits - out.filter(want).length;
+      for (const id of pool) {
+        if (need <= 0) break;
+        if (out.includes(id) || !want(id)) continue;
+        const swap = out.map((x, i) => [x, i]).reverse().find(([x]) => !want(x) && out.filter(y => !want(y)).length > fits);
+        if (!swap) break;
+        out[swap[1]] = id;
+        need--;
+      }
+    }
     if (own.length) {
       const fresh = seen ? own.filter(q => !seen.includes(q.id)) : own;
-      const from = fresh.length ? fresh : own;
+      let from = fresh.length ? fresh : own;
+      // Hurling counties usually get their hurling championship question.
+      const hurl = from.filter(q => isHurling(q.id));
+      if (hurl.length && HURLING_COUNTIES.has(county) && rnd() < 0.7) from = hurl;
       out.push(from[Math.floor(rnd() * from.length)].id);
     }
     return out;
@@ -210,7 +230,7 @@
   const tierById = id => D.TIERS.find(t => t.id === id) || D.WIDE;
   const label = id => (EBY[id] ? EBY[id].label : id);
 
-  const api = { QBY, EBY, QUESTIONS, irishDate, dayNumber, questionsFor, identify, candidates, shares, tierFor, tierById, norm, seeded, label };
+  const api = { QBY, EBY, QUESTIONS, isHurling, irishDate, dayNumber, questionsFor, identify, candidates, shares, tierFor, tierById, norm, seeded, label };
   if (node) module.exports = api;
   else root.PuckoutLogic = api;
 })(typeof window !== "undefined" ? window : globalThis);

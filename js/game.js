@@ -319,7 +319,7 @@
 
   // The cartoon footballer kicks from wherever the pin is on screen.
   // Hurling questions get a hurler and sliotar; everything else a footballer.
-  const isHurling = qid => { const q = L.QBY[qid]; return !!q && (q.cat === "Hurling" || /hurling|^shc-/.test(q.id)); };
+  const isHurling = L.isHurling;
   function kickFrom(tier, qid) {
     if (!window.PuckoutKick || !RoadMap.pinEl) return;
     const r = RoadMap.pinEl.getBoundingClientRect();

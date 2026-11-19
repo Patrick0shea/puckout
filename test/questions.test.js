@@ -82,3 +82,15 @@ test("back-to-back rounds don't repeat questions", () => {
   assert.equal(second.slice(0, 6).filter(id => first.includes(id)).length, 0, "no shared question repeats");
   assert.notEqual(second[6], first[6], "Kerry has a football and a hurling championship question, so the county one changes too");
 });
+
+test("every road has at least two hurling and two football questions", () => {
+  for (let r = 1; r <= 40; r++) {
+    for (const county of [undefined, "Kerry", "Kilkenny", "Antrim"]) {
+      const ids = L.questionsFor("round-" + r, county);
+      const h = ids.filter(L.isHurling).length;
+      assert.ok(h >= 2, `round ${r} ${county}: ${h} hurling`);
+      assert.ok(ids.length - h >= 2, `round ${r} ${county}: ${ids.length - h} football/general`);
+      assert.equal(new Set(ids).size, ids.length);
+    }
+  }
+});

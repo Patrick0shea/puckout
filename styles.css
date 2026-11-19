@@ -276,12 +276,12 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
 .hud, .qcard, .shotbar, .result, .ft, .screen { z-index: 2; }
 #kick:not(.kicking) { display: none; }
 #kick .k-stage { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; }
-#kick .kp { position: absolute; width: 84px; height: 101px; left: -54px; top: -95px; }
+#kick .kp { position: absolute; width: 104px; height: 125px; left: -67px; top: -118px; }
 #kick .kp-leg { transform-box: view-box; transform-origin: 53px 72px; }
-#kick .kb-x { position: absolute; left: 6px; top: -22px; }
+#kick .kb-x { position: absolute; left: 10px; top: -26px; }
 #kick .kb-y { width: 20px; height: 20px; }
 #kick .kb { width: 20px; height: 20px; display: block; }
-#kick .kb-flag { position: absolute; left: 80px; top: -110px; font-family: var(--sans); font-weight: 800; font-size: 14px; letter-spacing: .06em;
+#kick .kb-flag { position: absolute; left: 90px; top: -130px; font-family: var(--sans); font-weight: 800; font-size: 14px; letter-spacing: .06em;
   text-transform: uppercase; color: #fff; background: var(--wide); border-radius: 4px; padding: 3px 7px 1px; opacity: 0; white-space: nowrap; }
 
 #kick.kicking .kp { animation: kp-in .25s ease-out both, kp-out .35s ease-in calc(var(--t) + .45s) forwards; }
@@ -311,7 +311,18 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
 }
 @keyframes kb-spin { to { transform: rotate(540deg); } }
 @keyframes kb-flag { 0% { opacity: 0; transform: translateY(6px) rotate(-6deg); } 30% { opacity: 1; transform: translateY(0) rotate(-6deg); } 80% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { #kick { display: none !important; } }
+/* Reduce motion: no swing or flight. The player just appears in his follow-through
+   with the ball already landed down the road, then fades. */
+@media (prefers-reduced-motion: reduce) {
+  #kick.kicking .kp, #kick.kicking .kp-leg, #kick.kicking .kp-swing, #kick.kicking .kb-x, #kick.kicking .kb-y, #kick.kicking .kb, #kick.k-wide .kb-flag { animation: none; }
+  #kick.kicking .kp { animation: k-calm 1.8s linear both; }
+  #kick.kicking .kp-leg { transform: rotate(-48deg); }
+  #kick.kicking .kp-swing { transform: rotate(-80deg); }
+  #kick.kicking .kb-x { transform: translateX(var(--dx)); animation: k-calm 1.8s linear both; }
+  #kick.k-wide .kb-x { transform: translate(calc(var(--dx) * .8), 34px) scale(.55); }
+  #kick.k-wide .kb-flag { opacity: 1; animation: k-calm 1.8s linear both; }
+  @keyframes k-calm { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+}
 
 /* Hurling: the hurler and sliotar replace the footballer and ball */
 #kick .kp-h, #kick .kb-s { display: none; }
@@ -320,7 +331,7 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
 #kick .kp-swing { transform-box: view-box; transform-origin: 52px 46px; }
 #kick.kicking .kp-swing { animation: kp-swing .6s ease-in both; }
 #kick.k-hurling .kb-x, #kick.k-hurling .kb-y, #kick.k-hurling .kb { animation-delay: .4s; }
-#kick.k-hurling .kb-x { left: 14px; top: -20px; }
+#kick.k-hurling .kb-x { left: 20px; top: -24px; }
 /* He faces right: positive turns the hurley back over his shoulder, negative swings it through and up in front. */
 @keyframes kp-swing {
   0% { transform: rotate(0deg); }

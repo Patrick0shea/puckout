@@ -101,7 +101,6 @@
   // at: {x, y} screen point to stand on; county: for the jersey
   // sport: "hurling" for a hurler and sliotar, anything else for football
   function play(tier, at, county, sport) {
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const k = ensure();
     const [dx, h, ms] = FLIGHT[tier] || FLIGHT.junior;
     const [jersey, trim, shorts] = COLOURS[county] || DEFAULT;
@@ -122,7 +121,8 @@
     k.className = "kicking k-" + tier + (sport === "hurling" ? " k-hurling" : "");
     k.querySelector(".kb-flag").style.transform = flip ? "scaleX(-1)" : "";
     clearTimeout(timer);
-    timer = setTimeout(() => { k.className = ""; }, ms + 900);
+    const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    timer = setTimeout(() => { k.className = ""; }, calm ? 1800 : ms + 900);
   }
 
   root.PuckoutKick = { play, COLOURS };
