@@ -2,6 +2,8 @@
 
 A GAA quiz you can play as often as you like. Pick your home club, then answer seven questions. Every question has lots of right answers, and the fewer people who give yours, the further it carries you along a road across a cartoon map of Ireland, from your club to Croke Park.
 
+**▶ Play it now: https://patrick0shea.github.io/puckout/**
+
 ## How it plays
 
 - **Pick your club.** Search more than 700 clubs, or any of about 8,800 towns, villages and parishes if your club isn't listed yet. Your choice is remembered.
@@ -39,7 +41,7 @@ The game is published by GitHub Pages straight from `main` (Settings → Pages �
 
 At full time players can put their name on the leaderboard. It has three tables: **Today** (best road per player since midnight, Irish time), **All time** (total points across every road) and **Counties** (points added up by home county). Each road is worth up to 700 points, 100 per All-Star answer, so roads of different lengths compare fairly.
 
-Until a shared database is connected, the leaderboard shows the roads played on that device. To share it between everyone:
+The live game uses a shared Supabase database, so everyone's roads appear on the same board. If `js/config.js` is left blank, the leaderboard falls back to the roads played on that device. To point it at your own database:
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In the project's **SQL editor**, run `supabase/schema.sql`. It creates the `roads` table and the two leaderboard views, with rules that let anyone read the board and add a road, but not change or delete one.

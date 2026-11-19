@@ -6,7 +6,8 @@
 (function (root) {
   "use strict";
   const C = root.PuckoutConfig || {};
-  const base = (C.supabaseUrl || "").replace(/\/+$/, "");
+  // Accept the project URL with or without a pasted /rest/v1 on the end.
+  const base = (C.supabaseUrl || "").replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
   const key = C.supabaseAnonKey || "";
   const configured = !!(base && key);
   const HISTORY_KEY = "puckout:history";

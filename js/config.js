@@ -8,6 +8,6 @@
  * database rules in schema.sql only allow reading the board and adding roads.
  */
 window.PuckoutConfig = {
-  supabaseUrl: "",
+  supabaseUrl: "https://oqwrunaxwyhtsnpvjmil.supabase.co",
   supabaseAnonKey: "sb_publishable_m5sQklITspOciRik5LRRNw_I156op2b"
 };
