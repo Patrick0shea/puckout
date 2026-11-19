@@ -172,7 +172,7 @@
     S.game.last = m.last;
     S.view = "reveal";
     render();
-    app().travelTo(myFrac());
+    app().travelTo(myFrac(), L.isHurling(S.game.questions[m.index]) ? "hurling" : "football");
   }
   const myFrac = () => Math.min(1, ((S.game && S.game.totals[S.me.pid]) || 0) / MAX);
 

@@ -7,7 +7,8 @@ A GAA quiz you can play as often as you like. Pick your home club, then answer s
 ## How it plays
 
 - **Pick your club.** Search more than 700 clubs, or any of about 8,800 towns, villages and parishes if your club isn't listed yet. Your choice is remembered.
-- **The road.** Each road runs from your club to Croke Park, past a handful of places on the way: statues of GAA greats (Christy Ring in Cloyne, Mick O'Dwyer in Waterville, Páidí Ó Sé in Ventry, Mick Mackey in Castleconnell, John Joe O'Reilly in Cavan and more), where the GAA began (Hayes' Hotel, the Croke statue in Thurles, the Michael Cusack Centre), county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, Hayes' Hotel, Newgrange). Every road has different stops. Clubs close to Croke Park get a day trip out through the neighbouring counties and back.
+- **The road.** Each road follows Ireland's real main roads from your club to Croke Park, the way you'd actually drive it. From Kerry that's out the N21 past Adare Manor, through Limerick, up the M7 past the Barack Obama Plaza at Moneygall, into Dublin at the Red Cow and in for a pint at the Palace Bar before Croke Park. Every road comes into Dublin past an arrival point (the Red Cow, the Airport, the Phoenix Park or the Aviva) and a pub (the Palace Bar, the Gravediggers or Quinn's). On the way it passes up to six other places within a few kilometres of the road: statues of GAA greats (Christy Ring in Cloyne, Mick O'Dwyer in Waterville, Páidí Ó Sé in Ventry, Mick Mackey in Castleconnell, John Joe O'Reilly in Cavan and more), where the GAA began (Hayes' Hotel, the Croke statue in Thurles, the Michael Cusack Centre), county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, the Curragh, Kilbeggan Distillery, Knock, Slane Castle, Newgrange). The stops change from road to road. Dublin clubs get a short hop through the city.
+- **The map.** Every place is drawn as a little cartoon on the map: stadiums, statues, castles, pubs, a Luas tram, round towers, racecourses. When you score, a ball (or a sliotar on hurling questions) bounces along the road to your new spot, and each place you pass pops up on the map as you go by.
 - **Seven questions per road.** You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
 - Typos are forgiven when the answer is clear: `kery` counts as Kerry and `Co. Tipp` as Tipperary. Nicknames such as `Dubs`, `Cats` and `Deise` work too.
 - **The rarer the answer, the further you go:**
@@ -68,8 +69,9 @@ The anon key is designed to be public. The game runs in the browser, so a determ
 | `js/data.js` | The question pool, everything a player might type (with aliases) and the tiers |
 | `js/logic.js` | Picks each road's questions, recognises typed answers, works out rarity. No DOM, so the tests run in Node |
 | `js/pois.js` | The places a road can pass: county grounds, legends' clubs and landmarks, each with a one-line postcard |
-| `js/route.js` | Picks each road's stops between your club and Croke Park and smooths a road through them |
-| `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
+| `js/roads.js` | Generated road network: towns joined along the real motorways and national roads |
+| `js/route.js` | Finds the shortest way by road from your club to Croke Park, then picks the stops along it |
+| `js/map.js` | Paints the cartoon map of Ireland and its landmark icons, and moves the camera, pin, ball and pop-ups |
 | `js/party.js` | Party mode: rooms, live questions, reveals, race board and podium over Supabase Realtime |
 | `js/board.js` | The leaderboard: posts finished roads, reads Today, All time and Counties |
 | `js/config.js` | Shared leaderboard settings (Supabase URL and public key) |
@@ -78,6 +80,7 @@ The anon key is designed to be public. The game runs in the browser, so a determ
 | `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
 | `data/*.js` | Generated map, club, town and question data (see below) |
 | `tools/build_data.py` | Rebuilds the map, club and town data |
+| `tools/build_roads.py` | Rebuilds `js/roads.js` from a list of road routes (M7, N21 and so on) |
 | `tools/build_questions.py` | Rebuilds `data/questions.js` from GAA records on Wikipedia |
 | `styles.css` | Look and layout |
 | `test/` | Logic and route tests (`node --test`) |
@@ -127,7 +130,9 @@ The shares start out as the estimates in `js/data.js`. To use real answers from 
 
 ## Adding places to pass
 
-Add an entry to `POIS` in `js/pois.js` with a `kind` (`statue`, `legend`, `ground` or `landmark`), its coordinates, a short `tag` for the road sign and a one-line `line` for the postcard. Keep facts short and checkable.
+Add an entry to `POIS` in `js/pois.js` with a `kind` (`statue`, `legend`, `ground`, `landmark`, `roadside` or `pub`), its coordinates, a short `tag` for the road sign, a one-line `line` for the postcard and optionally an `icon` (`castle`, `tower`, `manor`, `pub`, `racecourse`, `distillery`, `shrine` and others; see `drawIcon` in `js/map.js`). Keep facts short and checkable. A place is only passed if it's within a few kilometres of a road in `js/roads.js`.
+
+To add a road, add its chain of towns to `ROADS` in `tools/build_roads.py` (towns are looked up in `data/places.js`) and run `python3 tools/build_roads.py`.
 
 ## Map and club data
 

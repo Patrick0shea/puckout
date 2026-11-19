@@ -284,7 +284,7 @@
     renderHud();
     if (entry.entity) {
       kickFrom(entry.tier, qid);
-      setTimeout(() => RoadMap.travelTo(frac(), 2000), 380); // the pin sets off as the ball is struck
+      setTimeout(() => RoadMap.travelTo(frac(), 2600, isHurling(qid) ? "hurling" : "football"), 380); // the pin sets off as the ball is struck
     } else RoadMap.travelTo(frac(), 500);
   }
 
@@ -466,7 +466,7 @@
       if (sideBySide()) frame(null, null, "party", 0.6); else frame(null, "party", null, 0.5);
       RoadMap.showOverview(900);
     },
-    travelTo: f => RoadMap.travelTo(f, 1800),
+    travelTo: (f, sport) => RoadMap.travelTo(f, 2600, sport),
     backToIntro() {
       if (home) { road = R.makeRoad(home, seed()); RoadMap.setRoad(road); RoadMap.frac = frac(); }
       renderIntro();

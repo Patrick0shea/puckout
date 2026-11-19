@@ -429,3 +429,30 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
   .p-answers .ans { grid-area: ans; color: var(--ink); }
   .p-answers .badge { grid-area: badge; justify-self: end; }
 }
+
+/* ---------- Ball bouncing along the road ---------- */
+.road-ball { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 2; }
+.road-ball .rb { position: absolute; left: -11px; top: -28px; width: 22px; height: 22px;
+  transform: translateY(var(--hop, 0px)) rotate(var(--spin, 0deg)); filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.road-ball .rb-shadow { position: absolute; left: -8px; top: -4px; width: 16px; height: 5px; border-radius: 50%;
+  background: rgba(30,40,25,.35); transform: scale(var(--sq, 1)); }
+.road-ball .rb-s { display: none; }
+.road-ball.sliotar .rb-s { display: block; width: 18px; height: 18px; left: -9px; top: -26px; }
+.road-ball.sliotar .rb-f { display: none; }
+
+/* ---------- Landmark pop-ups on the map ---------- */
+.map-pop { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px; max-width: 230px;
+  background: #fffdf5; border: 2.5px solid var(--ink); border-radius: 14px; padding: 6px 12px 6px 6px;
+  box-shadow: 3px 4px 0 rgba(23, 35, 29, .85); pointer-events: none; z-index: 3;
+  opacity: 0; transition: opacity .25s ease-out; }
+.map-pop::after { content: ""; position: absolute; left: 50%; bottom: -10px; margin-left: -8px; border: 8px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
+.map-pop img { width: 48px; height: 42px; flex: none; }
+.map-pop b { display: block; font-family: var(--serif); font-size: 1rem; line-height: 1.1; }
+.map-pop span { display: block; font-size: .78rem; color: var(--muted); }
+.map-pop.in { opacity: 1; animation: pop-in .45s cubic-bezier(.2, 1.6, .5, 1) both; }
+.map-pop.out { opacity: 0; transition-duration: .3s; }
+.map-pop.pop-pub { background: #fff4dc; }
+.map-pop.pop-statue { background: #f7ece0; }
+.map-pop.pop-croker { background: #fff6cf; border-color: var(--green); }
+@keyframes pop-in { from { transform-origin: 50% 100%; scale: .3; } to { scale: 1; } }
+@media (prefers-reduced-motion: reduce) { .map-pop.in { animation: none; } }
