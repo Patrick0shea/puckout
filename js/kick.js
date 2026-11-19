@@ -1,5 +1,6 @@
 /*
- * A cartoon Gaelic footballer who kicks the ball for each answer.
+ * A cartoon Gaelic footballer who kicks the ball for each answer, or on
+ * hurling questions a hurler in a helmet who strikes a sliotar.
  * The rarer the answer, the bigger the kick; a wrong guess goes wide.
  * He wears the player's home county colours and stands at the pin.
  */
@@ -46,11 +47,40 @@
       <circle cx="53.5" cy="28" r="1.3" fill="#2b2b2b"/>
       <path d="M51 32 Q54 34 57 32" stroke="#7a3d2a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
     </svg>`;
+  // The hurler: same kit, a helmet with a faceguard, and a hurley that
+  // swings from the shoulder (backswing, strike, follow-through).
+  const hurler = `
+    <svg class="kp kp-h" viewBox="0 0 100 120" aria-hidden="true">
+      <ellipse cx="50" cy="111" rx="22" ry="4" fill="rgba(30,40,25,.28)"/>
+      <path d="M47 72 L41 106" stroke="var(--sock)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M41 106 L34 108" stroke="#1d1d1d" stroke-width="6" stroke-linecap="round"/>
+      <path d="M53 72 L59 105" stroke="var(--sock)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M59 105 L67 106" stroke="#1d1d1d" stroke-width="6" stroke-linecap="round"/>
+      <rect x="40" y="64" width="20" height="12" rx="3" fill="var(--shorts)" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <rect x="38" y="38" width="24" height="30" rx="7" fill="var(--jersey)" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      <rect x="38" y="50" width="24" height="6" fill="var(--trim)"/>
+      <circle cx="50" cy="28" r="10" fill="var(--skin)"/>
+      <circle cx="53.5" cy="28" r="1.3" fill="#2b2b2b"/>
+      <path d="M39 27 Q39 14 50 14 Q61 14 61 26 L58 26 Q57 19 50 19 Q43 19 42 27 Z" fill="var(--helmet)"/>
+      <path d="M58 22 Q63 28 59 36 M60.5 25 L55 25 M61 30 L55 30 M59.5 34.5 L54 34" stroke="#9aa0a6" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <g class="kp-swing">
+        <path d="M44 46 L60 58 M56 45 L63 55" stroke="var(--skin)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M61 54 L72 100" stroke="#c99a5b" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M68.5 95 Q66 106 74 107 Q81 107 78 97 Z" fill="#c99a5b" stroke="#9c7440" stroke-width="1"/>
+        <path d="M70 98 L77 99" stroke="#6b5a3a" stroke-width="1.6"/>
+      </g>
+    </svg>`;
   const ball = `
-    <div class="kb-x"><div class="kb-y"><svg class="kb" viewBox="0 0 20 20" aria-hidden="true">
-      <circle cx="10" cy="10" r="8.5" fill="#fbfbf7" stroke="#2b2b2b" stroke-width="1.2"/>
-      <path d="M10 1.5 V18.5 M1.5 10 H18.5 M4 4 Q10 9 16 4 M4 16 Q10 11 16 16" stroke="#9a9a92" stroke-width="1" fill="none"/>
-    </svg></div></div>
+    <div class="kb-x"><div class="kb-y">
+      <svg class="kb kb-f" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="8.5" fill="#fbfbf7" stroke="#2b2b2b" stroke-width="1.2"/>
+        <path d="M10 1.5 V18.5 M1.5 10 H18.5 M4 4 Q10 9 16 4 M4 16 Q10 11 16 16" stroke="#9a9a92" stroke-width="1" fill="none"/>
+      </svg>
+      <svg class="kb kb-s" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="7" fill="#fbfbf3" stroke="#3a3a3a" stroke-width="1.1"/>
+        <path d="M3.4 9 Q6 5 10 7.5 Q14 10 16.6 6.5 M3.4 13 Q6 9.5 10 12 Q14 14.5 16.6 11" stroke="#8a7a66" stroke-width="1.2" fill="none"/>
+      </svg>
+    </div></div>
     <div class="kb-flag">Wide!</div>`;
 
   let el = null, timer = null;
@@ -59,7 +89,7 @@
     el = document.createElement("div");
     el.id = "kick";
     el.setAttribute("aria-hidden", "true");
-    el.innerHTML = `<div class="k-stage">${svg}${ball}</div>`;
+    el.innerHTML = `<div class="k-stage">${svg}${hurler}${ball}</div>`;
     // Sit just above the map and signs but under the cards, so a big kick
     // passes behind the question rather than over it.
     const marks = document.getElementById("marks");
@@ -69,7 +99,8 @@
 
   // tier: allstar | county | senior | inter | junior | wide
   // at: {x, y} screen point to stand on; county: for the jersey
-  function play(tier, at, county) {
+  // sport: "hurling" for a hurler and sliotar, anything else for football
+  function play(tier, at, county, sport) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const k = ensure();
     const [dx, h, ms] = FLIGHT[tier] || FLIGHT.junior;
@@ -80,6 +111,7 @@
     k.style.setProperty("--shorts", shorts);
     k.style.setProperty("--sock", trim === "#ffffff" ? jersey : trim);
     k.style.setProperty("--skin", "#f1c7a0");
+    k.style.setProperty("--helmet", trim === "#ffffff" || trim === "#d8d8d8" ? jersey === "#ffffff" ? "#2b2b2b" : jersey : trim);
     k.style.setProperty("--dx", dx + "px");
     k.style.setProperty("--h", h + "px");
     k.style.setProperty("--t", ms + "ms");
@@ -87,7 +119,7 @@
     stage.style.transform = `translate(${Math.round(at.x)}px, ${Math.round(at.y)}px)${flip ? " scaleX(-1)" : ""}`;
     k.className = "";
     void k.offsetWidth; // restart the animations
-    k.className = "kicking k-" + tier;
+    k.className = "kicking k-" + tier + (sport === "hurling" ? " k-hurling" : "");
     k.querySelector(".kb-flag").style.transform = flip ? "scaleX(-1)" : "";
     clearTimeout(timer);
     timer = setTimeout(() => { k.className = ""; }, ms + 900);

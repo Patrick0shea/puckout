@@ -256,7 +256,7 @@
       const m = state.misses[activeQ] = state.misses[activeQ] || [];
       if (!m.includes(id)) { m.push(id); save(); }
       setMsg(`${L.EBY[id].label} isn't on the list. Keep going.`, true);
-      kickFrom("wide");
+      kickFrom("wide", activeQ);
       renderMisses(); shake();
       $("guess").select();
       return;
@@ -283,7 +283,7 @@
     showResult(qid, after - before, passed);
     renderHud();
     if (entry.entity) {
-      kickFrom(entry.tier);
+      kickFrom(entry.tier, qid);
       setTimeout(() => RoadMap.travelTo(frac(), 2000), 380); // the pin sets off as the ball is struck
     } else RoadMap.travelTo(frac(), 500);
   }
@@ -318,10 +318,12 @@
   $("next").addEventListener("click", () => { const n = current(); n ? ask(n) : fullTime(); });
 
   // The cartoon footballer kicks from wherever the pin is on screen.
-  function kickFrom(tier) {
+  // Hurling questions get a hurler and sliotar; everything else a footballer.
+  const isHurling = qid => { const q = L.QBY[qid]; return !!q && (q.cat === "Hurling" || /hurling|^shc-/.test(q.id)); };
+  function kickFrom(tier, qid) {
     if (!window.PuckoutKick || !RoadMap.pinEl) return;
     const r = RoadMap.pinEl.getBoundingClientRect();
-    window.PuckoutKick.play(tier, { x: r.left - 26, y: r.top - 14 }, home && home.county);
+    window.PuckoutKick.play(tier, { x: r.left - 26, y: r.top - 14 }, home && home.county, isHurling(qid) ? "hurling" : "football");
   }
 
   // ---------- Full time ----------

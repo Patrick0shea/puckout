@@ -312,3 +312,20 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
 @keyframes kb-spin { to { transform: rotate(540deg); } }
 @keyframes kb-flag { 0% { opacity: 0; transform: translateY(6px) rotate(-6deg); } 30% { opacity: 1; transform: translateY(0) rotate(-6deg); } 80% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { #kick { display: none !important; } }
+
+/* Hurling: the hurler and sliotar replace the footballer and ball */
+#kick .kp-h, #kick .kb-s { display: none; }
+#kick.k-hurling .kp-h, #kick.k-hurling .kb-s { display: block; }
+#kick.k-hurling .kp:not(.kp-h), #kick.k-hurling .kb-f { display: none; }
+#kick .kp-swing { transform-box: view-box; transform-origin: 52px 46px; }
+#kick.kicking .kp-swing { animation: kp-swing .6s ease-in both; }
+#kick.k-hurling .kb-x, #kick.k-hurling .kb-y, #kick.k-hurling .kb { animation-delay: .4s; }
+#kick.k-hurling .kb-x { left: 14px; top: -20px; }
+/* He faces right: positive turns the hurley back over his shoulder, negative swings it through and up in front. */
+@keyframes kp-swing {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(130deg); }
+  66% { transform: rotate(0deg); }
+  82% { transform: rotate(-95deg); }
+  100% { transform: rotate(-80deg); }
+}
