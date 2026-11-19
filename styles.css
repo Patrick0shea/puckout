@@ -268,3 +268,5 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
 .btn-ghost:focus-visible { box-shadow: 0 0 0 4px rgba(230, 168, 23, .7); outline: none; }
 #new-road { justify-self: center; }
 .again-note { margin-top: -6px; text-align: center; }
+.sign-statue { background: #8a5a2b; outline-color: #8a5a2b; }
+.postcard.pc-statue { border-left-color: #8a5a2b; }

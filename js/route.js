@@ -48,14 +48,14 @@
     // if there aren't enough; short trips (Dublin clubs) take a scenic loop.
     for (const allow of [Math.max(30, D * 0.16), Math.max(55, D * 0.3), Math.max(90, D * 0.5)]) {
       const cands = pool.filter(x => x.detour <= allow && !chosen.includes(x));
-      // Seeded shuffle, then take kinds in turn so the road mixes legends, landmarks and grounds.
+      // Seeded shuffle, then take kinds in turn so the road mixes statues, legends, grounds and sights.
       for (let i = cands.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [cands[i], cands[j]] = [cands[j], cands[i]]; }
-      const byKind = { legend: [], landmark: [], ground: [] };
+      const byKind = { statue: [], legend: [], ground: [], landmark: [] };
       cands.forEach(x => byKind[x.p.kind].push(x));
-      const kinds = ["legend", "landmark", "ground"];
-      const offset = Math.floor(rnd() * 3);
+      // GAA places first: statues and legends' clubs, then grounds, then sights.
+      const kinds = ["statue", "legend", "ground", "landmark"];
       for (let k = 0; chosen.length < want && kinds.some(kd => byKind[kd].length); k++) {
-        const x = byKind[kinds[(k + offset) % 3]].shift();
+        const x = byKind[kinds[k % 4]].shift();
         if (!x || x.t < 0.06 || x.t > 0.96) continue;
         if (chosen.some(c => Math.abs(c.t - x.t) < gap || km(c.p, x.p) < 12)) continue;
         chosen.push(x);

@@ -16,7 +16,7 @@
     hedge: "rgba(110,140,80,.45)", tints: ["#e9d98a", "#9fc27a", "#d8b77a", "#86b38a", "#c9c27e", "#a8c98b"],
     border: "#5b7743", lake: "#b7d5d9", lakeEdge: "#8db3b8", river: "#9fc4ca",
     tree: ["#6f8a3a", "#7d9443", "#5f7a33", "#879b48"], mountain: "#9a8f7a", mountainDark: "#7d7360", snow: "#f4f2ea",
-    county: "rgba(36,58,34,.30)", town: "#2d3a33", brown: "#6e4426", green: "#00693b",
+    county: "rgba(36,58,34,.30)", town: "#2d3a33", brown: "#6e4426", green: "#00693b", bronze: "#8a5a2b",
     road: "#f4ecd2", roadEdge: "#b9a77a", trail: "#e6a817"
   };
 
@@ -173,12 +173,13 @@
       const c = proj(p.lat, p.lon);
       if (p.kind === "ground") drawStadium(g, c.x, c.y, 7, 5);
       else if (p.kind === "legend") drawPitch(g, c.x, c.y);
+      else if (p.kind === "statue") drawStatue(g, c.x, c.y);
       else drawHeritage(g, c.x, c.y);
       boxes.push({ x: c.x - 7, y: c.y - 7, w: 14, h: 14 });
     });
     pois.forEach(p => {
       const c = proj(p.lat, p.lon);
-      label(p.name, c.x, c.y, `700 10px "Overpass", system-ui, sans-serif`, p.kind === "landmark" ? COL.brown : "#1f4d33");
+      label(p.name, c.x, c.y, `700 10px "Overpass", system-ui, sans-serif`, p.kind === "landmark" ? COL.brown : p.kind === "statue" ? COL.bronze : "#1f4d33");
     });
 
     // Towns
@@ -215,6 +216,19 @@
     g.beginPath();
     for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
     g.closePath(); g.fill();
+  }
+  // A little bronze figure with a hurley, on a stone plinth.
+  function drawStatue(g, x, y) {
+    g.fillStyle = "rgba(40,30,20,.25)"; g.beginPath(); g.ellipse(x + 1.5, y + 4, 6, 2.2, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#c9c4b6"; g.fillRect(x - 5, y, 10, 4);
+    g.fillStyle = "#a9a393"; g.fillRect(x - 5, y + 3, 10, 1.2);
+    g.fillStyle = COL.bronze;
+    g.beginPath(); g.arc(x, y - 10.5, 2.1, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.moveTo(x - 2.2, y - 8); g.lineTo(x + 2.2, y - 8); g.lineTo(x + 1.6, y - 3); g.lineTo(x - 1.6, y - 3); g.closePath(); g.fill();
+    g.strokeStyle = COL.bronze; g.lineCap = "round"; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(x - 1, y - 3); g.lineTo(x - 2, y); g.moveTo(x + 1, y - 3); g.lineTo(x + 2, y); g.stroke();
+    g.beginPath(); g.moveTo(x + 2, y - 7.5); g.lineTo(x + 5.5, y - 12.5); g.stroke();
+    g.lineWidth = 2.2; g.beginPath(); g.moveTo(x + 5.5, y - 12.5); g.lineTo(x + 6.6, y - 13.6); g.stroke();
   }
   function drawHeritage(g, x, y) {
     g.fillStyle = "rgba(40,30,20,.25)"; g.beginPath(); g.arc(x + 1.2, y + 1.5, 5.5, 0, Math.PI * 2); g.fill();

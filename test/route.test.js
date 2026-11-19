@@ -51,3 +51,10 @@ test("places to pass are inside Ireland", () => {
     assert.ok(p.line && p.tag, p.name);
   }
 });
+
+test("roads pass statues of GAA greats when there's one on the way", () => {
+  const home = club("Castleisland Desmonds");
+  const days = ["round-1", "round-2", "round-3", "round-4", "round-5"];
+  const statues = new Set(days.flatMap(d => R.makeRoad(home, d).marks.filter(m => m.kind === "statue").map(m => m.name)));
+  assert.ok(statues.size >= 2, `statues passed from Castleisland: ${[...statues]}`);
+});

@@ -5,7 +5,7 @@ A GAA quiz you can play as often as you like. Pick your home club, then answer s
 ## How it plays
 
 - **Pick your club.** Search more than 700 clubs, or any of about 8,800 towns, villages and parishes if your club isn't listed yet. Your choice is remembered.
-- **The road.** Each road runs from your club to Croke Park, past a handful of places on the way: county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, Hayes' Hotel, Newgrange). Every road has different stops. Clubs close to Croke Park get a day trip out through the neighbouring counties and back.
+- **The road.** Each road runs from your club to Croke Park, past a handful of places on the way: statues of GAA greats (Christy Ring in Cloyne, Mick O'Dwyer in Waterville, Páidí Ó Sé in Ventry, Mick Mackey in Castleconnell, John Joe O'Reilly in Cavan and more), where the GAA began (Hayes' Hotel, the Croke statue in Thurles, the Michael Cusack Centre), county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, Hayes' Hotel, Newgrange). Every road has different stops. Clubs close to Croke Park get a day trip out through the neighbouring counties and back.
 - **Seven questions per road.** You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
 - Typos are forgiven when the answer is clear: `kery` counts as Kerry and `Co. Tipp` as Tipperary. Nicknames such as `Dubs`, `Cats` and `Deise` work too.
 - **The rarer the answer, the further you go:**
@@ -93,7 +93,7 @@ The shares start out as the estimates in `js/data.js`. To use real answers from 
 
 ## Adding places to pass
 
-Add an entry to `POIS` in `js/pois.js` with a `kind` (`ground`, `legend` or `landmark`), its coordinates, a short `tag` for the road sign and a one-line `line` for the postcard. Keep facts short and checkable.
+Add an entry to `POIS` in `js/pois.js` with a `kind` (`statue`, `legend`, `ground` or `landmark`), its coordinates, a short `tag` for the road sign and a one-line `line` for the postcard. Keep facts short and checkable.
 
 ## Map and club data
 

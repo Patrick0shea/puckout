@@ -2,6 +2,7 @@
  * Places a road can pass on the way to Croke Park.
  *   ground   – county grounds
  *   legend   – clubs that produced famous players
+ *   statue   – statues of GAA greats and GAA history sites
  *   landmark – famous Irish sights
  * `tag` is the short line on the road sign; `line` is the postcard shown when you pass.
  * Coordinates are WGS84 (lat, lon). Keep facts short and checkable.
@@ -13,7 +14,7 @@
     { id: "fitzgerald", kind: "ground", name: "Fitzgerald Stadium", lat: 52.0565, lon: -9.5085, tag: "Killarney", line: "Kerry's home in Killarney, in the shadow of the Reeks." },
     { id: "austinstack-park", kind: "ground", name: "Austin Stack Park", lat: 52.2689, lon: -9.6997, tag: "Tralee", line: "Kerry's other county ground, in Tralee." },
     { id: "puc", kind: "ground", name: "Páirc Uí Chaoimh", lat: 51.9000, lon: -8.4210, tag: "Cork", line: "Cork's home, on the banks of the Lee." },
-    { id: "semple", kind: "ground", name: "Semple Stadium", lat: 52.6795, lon: -7.8215, tag: "Thurles", line: "The home of hurling, in Thurles, Tipperary." },
+    { id: "semple", kind: "ground", name: "Semple Stadium", lat: 52.6795, lon: -7.8215, tag: "Thurles", line: "The home of hurling, in Thurles. Outside stands Ár gCluichí Féin, the first GAA statue to feature a female player (2026)." },
     { id: "gaelic-grounds", kind: "ground", name: "Gaelic Grounds", lat: 52.6560, lon: -8.6430, tag: "Limerick", line: "Limerick's home on the Ennis Road." },
     { id: "cusack-ennis", kind: "ground", name: "Cusack Park", lat: 52.8445, lon: -8.9845, tag: "Ennis", line: "Clare's county ground, in Ennis." },
     { id: "walsh-park", kind: "ground", name: "Walsh Park", lat: 52.2545, lon: -7.1180, tag: "Waterford", line: "Waterford's county ground." },
@@ -43,7 +44,6 @@
     { id: "casement", kind: "ground", name: "Casement Park", lat: 54.5745, lon: -5.9775, tag: "Belfast", line: "Antrim's home ground, in west Belfast." },
 
     // ---- Legends' clubs ----
-    { id: "cloyne", kind: "legend", name: "Cloyne", lat: 51.8575, lon: -8.1175, tag: "Christy Ring's club", line: "Cloyne, where Christy Ring started out. He won eight All-Irelands with Cork." },
     { id: "ballyhale", kind: "legend", name: "Ballyhale Shamrocks", lat: 52.4621, lon: -7.2135, tag: "Henry Shefflin's club", line: "Ballyhale, home of Henry Shefflin and his record ten All-Ireland medals." },
     { id: "drcrokes", kind: "legend", name: "Dr Crokes", lat: 52.0676, lon: -9.5033, tag: "the Gooch's club", line: "Dr Crokes in Killarney, the club of Colm 'Gooch' Cooper." },
     { id: "fossa", kind: "legend", name: "Fossa", lat: 52.0703, lon: -9.5776, tag: "David Clifford's club", line: "Fossa, home club of David Clifford." },
@@ -71,8 +71,26 @@
     { id: "gowran", kind: "legend", name: "Gowran", lat: 52.6294, lon: -7.0733, tag: "DJ Carey's club", line: "Gowran, home of DJ Carey's club, Young Irelands." },
     { id: "skryne", kind: "legend", name: "Skryne", lat: 53.5830, lon: -6.5580, tag: "Colm O'Rourke's club", line: "Skryne, home club of Meath's Colm O'Rourke." },
 
+    // ---- Statues of GAA greats, and where the GAA began ----
+    { id: "cloyne", kind: "statue", name: "Christy Ring statue", lat: 51.8628, lon: -8.1244, tag: "Cloyne", line: "A nine-foot bronze of Christy Ring at the gates of the Cloyne pitch where he learned to hurl. Jack Lynch unveiled it in 1983." },
+    { id: "odwyer", kind: "statue", name: "Mick O'Dwyer statue", lat: 51.8290, lon: -10.1700, tag: "Waterville", line: "Micko in bronze on the Waterville seafront, unveiled in 2012 in his native village." },
+    { id: "paidi", kind: "statue", name: "Páidí Ó Sé statue", lat: 52.1325, lon: -10.3669, tag: "Ventry", line: "A life-size bronze of Páidí Ó Sé outside the family pub in Ventry, unveiled on what would have been his 60th birthday in 2015." },
+    { id: "mackey", kind: "statue", name: "Mick Mackey statue", lat: 52.7139, lon: -8.4994, tag: "Castleconnell", line: "Mick Mackey of Ahane and Limerick, in bronze on one of his famous solo runs. Unveiled in 2013." },
+    { id: "power", kind: "statue", name: "Jackie Power statue", lat: 52.6677, lon: -8.5312, tag: "Annacotty", line: "A life-size bronze of Jackie Power, the Ahane and Limerick hurler, erected in Annacotty in 1996." },
+    { id: "rackard", kind: "statue", name: "Nicky Rackard statue", lat: 52.3395, lon: -6.4635, tag: "Wexford town", line: "Nicky Rackard in Selskar Square, Wexford, caught just about to strike for goal. Unveiled in 2012." },
+    { id: "johnjoe", kind: "statue", name: "John Joe O'Reilly statue", lat: 53.9908, lon: -7.3606, tag: "Cavan town", line: "A 7-foot bronze of John Joe O'Reilly, captain of Cavan's 1947 Polo Grounds winners, in Market Square. Unveiled in 2022." },
+    { id: "colleran", kind: "statue", name: "Enda Colleran statue", lat: 53.4833, lon: -8.5667, tag: "Moylough", line: "A bronze of Galway captain Enda Colleran in his home village of Moylough, unveiled in 2003." },
+    { id: "earley", kind: "statue", name: "Dermot Earley statue", lat: 53.8450, lon: -8.6050, tag: "Gorthaganny", line: "A life-size bronze of Roscommon's Dermot Earley in Gorthaganny, unveiled by President McAleese in 2011." },
+    { id: "murray", kind: "statue", name: "Jimmy Murray statue", lat: 53.5739, lon: -8.0889, tag: "Knockcroghery", line: "Jimmy Murray, Roscommon's All-Ireland winning captain, carved in Roscommon limestone in his home village." },
+    { id: "gannon", kind: "statue", name: "Squires Gannon statue", lat: 53.1580, lon: -6.9120, tag: "Kildare town", line: "Bill 'Squires' Gannon of Kildare, the first captain to lift the Sam Maguire, in 1928. His statue went up in Kildare town in 2022." },
+    { id: "hogan", kind: "statue", name: "Michael Hogan statue", lat: 52.4564, lon: -7.4942, tag: "Grangemockler", line: "Michael Hogan, the Tipperary footballer killed at Croke Park on Bloody Sunday 1920. The Hogan Stand is named after him." },
+    { id: "croke", kind: "statue", name: "Archbishop Croke statue", lat: 52.6807, lon: -7.8132, tag: "Thurles", line: "The GAA's first patron, the man Croke Park is named after, in bronze on Liberty Square, Thurles (1922)." },
+    { id: "sam", kind: "statue", name: "Sam Maguire statue", lat: 51.7200, lon: -9.1130, tag: "Dunmanway", line: "Sam Maguire, the man the football trophy is named after, in bronze in Dunmanway's Market Square." },
+    { id: "cusack", kind: "statue", name: "Michael Cusack Centre", lat: 53.0330, lon: -9.0700, tag: "Carron, the Burren", line: "The birthplace of Michael Cusack, founder of the GAA, in the Burren. A bronze bust of him stands there." },
+    { id: "davin", kind: "statue", name: "Davin Park", lat: 52.3492, lon: -7.4131, tag: "Carrick-on-Suir", line: "Davin Park, named for Maurice Davin, the GAA's first President." },
+
     // ---- Landmarks ----
-    { id: "hayes", kind: "landmark", name: "Hayes' Hotel", lat: 52.6805, lon: -7.8135, tag: "where the GAA began", line: "Hayes' Hotel, Thurles, where the GAA was founded on 1 November 1884." },
+    { id: "hayes", kind: "statue", name: "Hayes' Hotel", lat: 52.6805, lon: -7.8135, tag: "where the GAA began", line: "Hayes' Hotel, Thurles, where the GAA was founded on 1 November 1884." },
     { id: "moher", kind: "landmark", name: "Cliffs of Moher", lat: 52.9715, lon: -9.4309, tag: "Co. Clare", line: "The Cliffs of Moher, rising out of the Atlantic." },
     { id: "cashel", kind: "landmark", name: "Rock of Cashel", lat: 52.5200, lon: -7.8906, tag: "Co. Tipperary", line: "The Rock of Cashel, seat of the kings of Munster." },
     { id: "newgrange", kind: "landmark", name: "Newgrange", lat: 53.6947, lon: -6.4755, tag: "older than the pyramids", line: "Newgrange, a passage tomb older than the pyramids of Giza." },
