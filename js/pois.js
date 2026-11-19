@@ -40,7 +40,7 @@
     { id: "celtic-park", kind: "ground", name: "Celtic Park", lat: 54.9885, lon: -7.3390, tag: "Derry", line: "Derry's county ground." },
     { id: "maccumhaill", kind: "ground", name: "MacCumhaill Park", lat: 54.8010, lon: -7.7860, tag: "Ballybofey", line: "Donegal's county ground, in Ballybofey." },
     { id: "brewster", kind: "ground", name: "Brewster Park", lat: 54.3495, lon: -7.6350, tag: "Enniskillen", line: "Fermanagh's county ground, in Enniskillen." },
-    { id: "esler", kind: "ground", name: "Páirc Esler", lat: 54.1810, lon: -6.3320, tag: "Newry", line: "Down's county ground, in Newry." },
+    { id: "esler", kind: "ground", name: "Páirc Esler", lat: 54.1810, lon: -6.3320, tag: "Newry", line: "Down's county ground, in Newry. In 1960 Down became the first team from Northern Ireland to win the Sam Maguire." },
     { id: "casement", kind: "ground", name: "Casement Park", lat: 54.5745, lon: -5.9775, tag: "Belfast", line: "Antrim's home ground, in west Belfast." },
 
     // ---- Legends' clubs ----
@@ -57,9 +57,9 @@
     { id: "errigal", kind: "legend", name: "Errigal Ciarán", lat: 54.5245, lon: -7.0690, tag: "Peter Canavan's club", line: "Errigal Ciarán, club of Peter Canavan, who captained Tyrone to their first All-Ireland in 2003." },
     { id: "moy", kind: "legend", name: "Moy Tír na nÓg", lat: 54.4432, lon: -6.6966, tag: "Seán Cavanagh's club", line: "The Moy, home club of Tyrone's Seán Cavanagh." },
     { id: "glenswilly", kind: "legend", name: "Glenswilly", lat: 54.9600, lon: -7.8400, tag: "Michael Murphy's club", line: "Glenswilly, club of Michael Murphy, who captained Donegal to the 2012 All-Ireland." },
-    { id: "crossmaglen", kind: "legend", name: "Crossmaglen Rangers", lat: 54.0749, lon: -6.6091, tag: "club football royalty", line: "Crossmaglen Rangers, one of the most successful clubs in All-Ireland club football." },
+    { id: "crossmaglen", kind: "legend", name: "Crossmaglen Rangers", lat: 54.0749, lon: -6.6091, tag: "club football royalty", line: "Crossmaglen Rangers, six times All-Ireland club football champions, more than any club bar Nemo Rangers." },
     { id: "slaughtneil", kind: "legend", name: "Slaughtneil", lat: 54.8834, lon: -6.7003, tag: "three codes, one club", line: "Slaughtneil, Ulster club champions in football, hurling and camogie." },
-    { id: "dunloy", kind: "legend", name: "Dunloy", lat: 55.0074, lon: -6.4118, tag: "Antrim hurling stronghold", line: "Dunloy Cúchullains, a stronghold of Antrim hurling." },
+    { id: "dunloy", kind: "legend", name: "Dunloy", lat: 55.0074, lon: -6.4118, tag: "Antrim hurling stronghold", line: "Dunloy Cúchullains, a stronghold of Antrim hurling, five times beaten in All-Ireland club hurling finals." },
     { id: "westport", kind: "legend", name: "Westport", lat: 53.8000, lon: -9.5167, tag: "Lee Keegan's club", line: "Westport, home club of Mayo's Lee Keegan." },
     { id: "ballaghaderreen", kind: "legend", name: "Ballaghaderreen", lat: 53.9013, lon: -8.5751, tag: "Andy Moran's club", line: "Ballaghaderreen, home club of Mayo's Andy Moran." },
     { id: "patrickswell", kind: "legend", name: "Patrickswell", lat: 52.5972, lon: -8.7089, tag: "Cian Lynch's club", line: "Patrickswell, home club of Limerick's Cian Lynch." },
@@ -69,6 +69,16 @@
     { id: "walsh-island", kind: "legend", name: "Walsh Island", lat: 53.2170, lon: -7.2250, tag: "Matt Connor's club", line: "Walsh Island, home of Offaly forward Matt Connor." },
     { id: "rathnure", kind: "legend", name: "Rathnure", lat: 52.4989, lon: -6.7631, tag: "the Rackards' club", line: "Rathnure, home of Wexford's Rackard brothers." },
     { id: "gowran", kind: "legend", name: "Gowran", lat: 52.6294, lon: -7.0733, tag: "DJ Carey's club", line: "Gowran, home of DJ Carey's club, Young Irelands." },
+    { id: "bellaghy", kind: "legend", name: "Bellaghy", lat: 54.8071, lon: -6.5148, tag: "first Ulster club champions", line: "Bellaghy, the first Ulster club to win the All-Ireland club football title, in 1972. Seamus Heaney grew up here too." },
+    { id: "burren", kind: "legend", name: "St Mary's Burren", lat: 54.1323, lon: -6.2617, tag: "All-Ireland club champions", line: "St Mary's Burren, All-Ireland club football champions in 1986 and 1988." },
+    { id: "kilcoo", kind: "legend", name: "Kilcoo", lat: 54.2358, lon: -6.0233, tag: "2022 club champions", line: "Kilcoo, the Down club that won the All-Ireland club football title in 2022, beating Kilmacud Crokes." },
+    { id: "glen", kind: "legend", name: "Glen", lat: 54.8398, lon: -6.6883, tag: "2024 club champions", line: "Glen of Maghera, All-Ireland club football champions in 2024." },
+    { id: "ballinderry", kind: "legend", name: "Ballinderry Shamrocks", lat: 54.6585, lon: -6.5589, tag: "2002 club champions", line: "Ballinderry Shamrocks, on the shores of Lough Neagh, All-Ireland club football champions in 2002." },
+    { id: "lavey", kind: "legend", name: "Lavey", lat: 54.8306, lon: -6.6056, tag: "1991 club champions", line: "Lavey, the south Derry club that won the All-Ireland club football title in 1991." },
+    { id: "stgalls", kind: "legend", name: "St Gall's", lat: 54.5900, lon: -5.9850, tag: "Antrim's club champions", line: "St Gall's of west Belfast, the first Antrim club to win the All-Ireland club football title, in 2010." },
+    { id: "loughgiel", kind: "legend", name: "Loughgiel Shamrocks", lat: 55.0440, lon: -6.3300, tag: "club hurling champions", line: "Loughgiel Shamrocks, All-Ireland club hurling champions in 1983 and 2012." },
+    { id: "cushendall", kind: "legend", name: "Cushendall", lat: 55.0803, lon: -6.0629, tag: "hurling in the Glens", line: "Cushendall, a hurling village in the Glens of Antrim. Ruairí Óg reached the All-Ireland club hurling final in 2016." },
+    { id: "scotstown", kind: "legend", name: "Scotstown", lat: 54.2775, lon: -7.0650, tag: "Monaghan club", line: "Scotstown, Monaghan's great club side, who reached the All-Ireland club football final in 1979." },
     { id: "skryne", kind: "legend", name: "Skryne", lat: 53.5830, lon: -6.5580, tag: "Colm O'Rourke's club", line: "Skryne, home club of Meath's Colm O'Rourke." },
 
     // ---- Statues of GAA greats, and where the GAA began ----
@@ -86,10 +96,13 @@
     { id: "hogan", kind: "statue", name: "Michael Hogan statue", lat: 52.4564, lon: -7.4942, tag: "Grangemockler", line: "Michael Hogan, the Tipperary footballer killed at Croke Park on Bloody Sunday 1920. The Hogan Stand is named after him." },
     { id: "croke", kind: "statue", name: "Archbishop Croke statue", lat: 52.6807, lon: -7.8132, tag: "Thurles", line: "The GAA's first patron, the man Croke Park is named after, in bronze on Liberty Square, Thurles (1922)." },
     { id: "sam", kind: "statue", name: "Sam Maguire statue", lat: 51.7200, lon: -9.1130, tag: "Dunmanway", line: "Sam Maguire, the man the football trophy is named after, in bronze in Dunmanway's Market Square." },
+    { id: "egan", kind: "statue", name: "John Egan statue", lat: 51.8378, lon: -9.9010, tag: "Sneem", line: "John Egan, six-time All-Ireland winner with Kerry, sits in bronze on a bench facing the Sneem pitch. Unveiled in 2017." },
     { id: "cusack", kind: "statue", name: "Michael Cusack Centre", lat: 53.0330, lon: -9.0700, tag: "Carron, the Burren", line: "The birthplace of Michael Cusack, founder of the GAA, in the Burren. A bronze bust of him stands there." },
     { id: "davin", kind: "statue", name: "Davin Park", lat: 52.3492, lon: -7.4131, tag: "Carrick-on-Suir", line: "Davin Park, named for Maurice Davin, the GAA's first President." },
 
     // ---- Landmarks ----
+    { id: "navan-fort", kind: "landmark", name: "Navan Fort", lat: 54.3484, lon: -6.6973, tag: "Emain Macha", line: "Navan Fort, Emain Macha, seat of the ancient kings of Ulster. Legend says the young Setanta killed Culann's hound with a sliotar and became Cú Chulainn." },
+    { id: "inniskeen", kind: "landmark", name: "Inniskeen", lat: 54.0000, lon: -6.5833, tag: "Patrick Kavanagh country", line: "Inniskeen, home of the poet Patrick Kavanagh, who kept goal for his local club." },
     { id: "hayes", kind: "statue", name: "Hayes' Hotel", lat: 52.6805, lon: -7.8135, tag: "where the GAA began", line: "Hayes' Hotel, Thurles, where the GAA was founded on 1 November 1884." },
     { id: "moher", kind: "landmark", name: "Cliffs of Moher", lat: 52.9715, lon: -9.4309, tag: "Co. Clare", line: "The Cliffs of Moher, rising out of the Atlantic." },
     { id: "cashel", kind: "landmark", name: "Rock of Cashel", lat: 52.5200, lon: -7.8906, tag: "Co. Tipperary", line: "The Rock of Cashel, seat of the kings of Munster." },
