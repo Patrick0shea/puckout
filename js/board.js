@@ -38,7 +38,9 @@
   async function api(path, opts = {}) {
     const res = await fetch(`${base}/rest/v1/${path}`, {
       ...opts,
-      headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...(opts.headers || {}) }
+      // Newer Supabase keys (sb_publishable_…) go in the apikey header only;
+      // older JWT-style anon keys also go in Authorization.
+      headers: { apikey: key, ...(key.startsWith("sb_") ? {} : { Authorization: `Bearer ${key}` }), "Content-Type": "application/json", ...(opts.headers || {}) }
     });
     if (!res.ok) throw new Error(`Leaderboard ${res.status}`);
     return res.status === 204 || res.status === 201 ? null : res.json();

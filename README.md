@@ -31,15 +31,9 @@ It's a static site with no build step and no dependencies.
 - serve it locally: `npm start`, then visit http://localhost:8080
 - run the tests: `npm test` (Node 18+)
 
-### Publishing on GitHub Pages
+### Live site
 
-`.github/workflows/pages.yml` runs the tests and publishes the site on every push to `main`. GitHub needs a one-time switch first:
-
-1. Go to **Settings → Pages**.
-2. Under **Build and deployment → Source**, choose **GitHub Actions**.
-3. Re-run the latest "Deploy to GitHub Pages" run under the **Actions** tab, or push any change.
-
-The game is then live at https://patrick0shea.github.io/puckout/
+The game is published by GitHub Pages straight from `main` (Settings → Pages → Deploy from a branch) at **https://patrick0shea.github.io/puckout/**. It updates a minute or two after each push. `.github/workflows/tests.yml` runs the tests on every push.
 
 ## Leaderboard
 
@@ -49,7 +43,7 @@ Until a shared database is connected, the leaderboard shows the roads played on 
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In the project's **SQL editor**, run `supabase/schema.sql`. It creates the `roads` table and the two leaderboard views, with rules that let anyone read the board and add a road, but not change or delete one.
-3. In **Project Settings → API**, copy the **Project URL** and the **anon public** key into `js/config.js`, and push.
+3. In **Project Settings → API**, copy the **Project URL** and the **publishable** key (or the older **anon public** key) into `js/config.js`, and push.
 
 The anon key is designed to be public. The game runs in the browser, so a determined player could post a fake score; if that becomes a problem, add a server-side check or moderate the `roads` table in Supabase.
 
