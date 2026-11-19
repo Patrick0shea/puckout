@@ -449,9 +449,30 @@
   }
   document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => renderBoard(b.dataset.tab)));
   $("open-board").addEventListener("click", () => openBoard("today"));
+  $("open-party").addEventListener("click", () => {
+    if (!home) { $("club-q").focus(); return; }
+    window.PuckoutParty && window.PuckoutParty.open();
+  });
   $("ft-open-board").addEventListener("click", () => openBoard("today"));
   $("close-board").addEventListener("click", () => { if (boardBack === "fulltime") fullTime(); else renderIntro(); });
   $("new-road").addEventListener("click", () => { clearInterval(timer); newRound(); });
+
+  // ---------- Bridge for party mode (js/party.js) ----------
+  window.PuckoutApp = {
+    home: () => home,
+    hideAll: () => { clearInterval(timer); show(); },
+    setRoad(r, f) {
+      RoadMap.setRoad(r); RoadMap.frac = f;
+      if (sideBySide()) frame(null, null, "party", 0.6); else frame(null, "party", null, 0.5);
+      RoadMap.showOverview(900);
+    },
+    travelTo: f => RoadMap.travelTo(f, 1800),
+    backToIntro() {
+      if (home) { road = R.makeRoad(home, seed()); RoadMap.setRoad(road); RoadMap.frac = frac(); }
+      renderIntro();
+      RoadMap.showOverview(800);
+    }
+  };
 
   // ---------- Boot ----------
   if (home) road = R.makeRoad(home, seed());

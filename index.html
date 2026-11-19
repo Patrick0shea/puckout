@@ -40,6 +40,7 @@
       <p id="road-line" class="road-line" hidden></p>
       <button id="start" class="btn-sign" type="button" hidden>Start the road</button>
       <button id="new-road" class="btn-link" type="button" hidden>Start a new road instead</button>
+      <button id="open-party" class="btn-ghost party-btn" type="button">Play with friends</button>
       <details class="howto">
         <summary>How to play</summary>
         <ol>
@@ -101,6 +102,12 @@
     <button id="next" class="btn-sign btn-small" type="button">Next question</button>
   </section>
 
+  <!-- Party mode -->
+  <section id="party" class="ft card party" hidden aria-live="polite">
+    <button type="button" class="btn-link party-close" data-act="close">Close</button>
+    <div id="party-body"></div>
+  </section>
+
   <!-- Leaderboard -->
   <section id="board" class="ft card board" hidden aria-labelledby="board-title">
     <div class="board-head">
@@ -156,5 +163,6 @@
   <script src="js/board.js?v=20261119"></script>
   <script src="js/kick.js?v=20261119"></script>
   <script src="js/game.js?v=20261119"></script>
+  <script src="js/party.js?v=20261119"></script>
 </body>
 </html>

@@ -37,6 +37,18 @@ It's a static site with no build step and no dependencies.
 
 The game is published by GitHub Pages straight from `main` (Settings → Pages → Deploy from a branch) at **https://patrick0shea.github.io/puckout/**. It updates a minute or two after each push. `.github/workflows/tests.yml` runs the tests on every push.
 
+## Party mode (play with friends)
+
+A live multiplayer version of the game, like a pub quiz on everyone's phone.
+
+1. Pick your club, then tap **Play with friends** and **Host a room**. You get a four-letter room code and a link to share.
+2. Friends open the link (or enter the code), each from their own club.
+3. The host starts the game. Everyone gets the same seven questions at the same time, with the same 30-second clock. Answers stay hidden until everyone is in.
+4. After each question everyone's answers are revealed. Rarer answers score more, as in the main game, and **if nobody else in the room gave your answer you get +20**.
+5. A live race board shows everyone heading for Croke Park, and full time ends with a podium. The host can start another game in the same room.
+
+It runs over Supabase Realtime on the same project as the leaderboard (no extra tables or setup). The host's browser runs the game; if the host leaves, the player who joined next takes over. Party scores are kept to the room and don't go on the main leaderboard.
+
 ## Leaderboard
 
 At full time players can put their name on the leaderboard. It has three tables: **Today** (best road per player since midnight, Irish time), **All time** (total points across every road) and **Counties** (points added up by home county). Each road is worth up to 700 points, 100 per All-Star answer, so roads of different lengths compare fairly.
@@ -58,6 +70,7 @@ The anon key is designed to be public. The game runs in the browser, so a determ
 | `js/pois.js` | The places a road can pass: county grounds, legends' clubs and landmarks, each with a one-line postcard |
 | `js/route.js` | Picks each road's stops between your club and Croke Park and smooths a road through them |
 | `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
+| `js/party.js` | Party mode: rooms, live questions, reveals, race board and podium over Supabase Realtime |
 | `js/board.js` | The leaderboard: posts finished roads, reads Today, All time and Counties |
 | `js/config.js` | Shared leaderboard settings (Supabase URL and public key) |
 | `supabase/schema.sql` | Database table, views and access rules for the leaderboard |
