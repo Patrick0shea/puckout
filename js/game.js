@@ -75,14 +75,16 @@
     document.body.classList.toggle("on-intro", ids.includes("intro"));
   }
   // Keep the pin (or the overview) in the open stretch of map between the cards.
-  let framing = [null, null, null];
-  function frame(topId, bottomId, leftId) {
-    framing = [topId, bottomId, leftId];
+  let framing = [null, null, null, 0.5];
+  // `bias` places the pin within the open strip: 0.5 is the middle; higher
+  // sits it lower, leaving room above for the footballer and the ball's flight.
+  function frame(topId, bottomId, leftId, bias = 0.5) {
+    framing = [topId, bottomId, leftId, bias];
     const vw = window.innerWidth, vh = window.innerHeight;
     const top = topId ? $(topId).getBoundingClientRect().bottom : 0;
     const bottom = bottomId ? $(bottomId).getBoundingClientRect().top : vh;
     const left = leftId ? $(leftId).getBoundingClientRect().right : 0;
-    RoadMap.setFocus((left + vw) / 2 / vw, Math.max(0.15, Math.min(0.85, (top + bottom) / 2 / vh)), { w: vw - left, h: Math.max(120, bottom - top) });
+    RoadMap.setFocus((left + vw) / 2 / vw, Math.max(0.15, Math.min(0.88, (top + (bottom - top) * bias) / vh)), { w: vw - left, h: Math.max(120, bottom - top) });
   }
   window.addEventListener("resize", () => frame(...framing));
   const sideBySide = () => window.innerWidth >= 960;
@@ -212,7 +214,7 @@
     renderMisses();
     renderHud();
     show("hud", "question", "shotbar");
-    frame("question", "shotbar");
+    frame("question", "shotbar", null, 0.68);
     RoadMap.frac = frac(); // in case the last move was cut short by a quick click
     RoadMap.zoomToPin(900);
     if (!state.started[qid]) { state.started[qid] = Date.now(); save(); }
@@ -254,6 +256,7 @@
       const m = state.misses[activeQ] = state.misses[activeQ] || [];
       if (!m.includes(id)) { m.push(id); save(); }
       setMsg(`${L.EBY[id].label} isn't on the list. Keep going.`, true);
+      kickFrom("wide");
       renderMisses(); shake();
       $("guess").select();
       return;
@@ -279,7 +282,10 @@
     const passed = road ? road.marks.filter((m, i) => i > 0 && m.km > before + 0.01 && m.km <= after + 0.01) : [];
     showResult(qid, after - before, passed);
     renderHud();
-    RoadMap.travelTo(frac(), entry.pts ? 2000 : 500);
+    if (entry.entity) {
+      kickFrom(entry.tier);
+      setTimeout(() => RoadMap.travelTo(frac(), 2000), 380); // the pin sets off as the ball is struck
+    } else RoadMap.travelTo(frac(), 500);
   }
 
   function showResult(qid, gained, passed) {
@@ -306,10 +312,17 @@
     $("fact").textContent = q.fact;
     $("next").textContent = current() ? "Next question" : "Full time";
     show("hud", "question", "result");
-    frame("question", "result");
+    frame("question", "result", null, 0.72);
     try { $("next").focus({ preventScroll: true }); } catch (e) {}
   }
   $("next").addEventListener("click", () => { const n = current(); n ? ask(n) : fullTime(); });
+
+  // The cartoon footballer kicks from wherever the pin is on screen.
+  function kickFrom(tier) {
+    if (!window.PuckoutKick || !RoadMap.pinEl) return;
+    const r = RoadMap.pinEl.getBoundingClientRect();
+    window.PuckoutKick.play(tier, { x: r.left - 26, y: r.top - 14 }, home && home.county);
+  }
 
   // ---------- Full time ----------
   function reached() {

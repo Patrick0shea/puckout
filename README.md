@@ -19,6 +19,7 @@ A GAA quiz you can play as often as you like. Pick your home club, then answer s
 | Junior | 30% or more | 1.4% |
 | Wide | out of time | 0 |
 
+- **Every answer gets a kick.** A cartoon footballer in your home county's colours stands at your pin and kicks the ball: the rarer the answer, the bigger the kick (an All-Star soars with a gold glow). Wrong guesses go wide.
 - Seven All-Star answers gets you all the way to Croke Park. As you pass each place you get a postcard about it. At full time you see how far you got and a result you can copy and share.
 - **Play again** as often as you like. Each round is a new road with new stops and new questions, and your progress on an unfinished road is kept if you close the page.
 
@@ -41,6 +42,7 @@ To publish it on GitHub Pages: Settings → Pages → Deploy from a branch → `
 | `js/pois.js` | The places a road can pass: county grounds, legends' clubs and landmarks, each with a one-line postcard |
 | `js/route.js` | Picks each road's stops between your club and Croke Park and smooths a road through them |
 | `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
+| `js/kick.js` | The cartoon footballer and the kick animation, in each county's colours |
 | `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
 | `data/*.js` | Generated map, club, town and question data (see below) |
 | `tools/build_data.py` | Rebuilds the map, club and town data |
