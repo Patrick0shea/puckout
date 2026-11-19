@@ -53,7 +53,7 @@
       </details>
       <div class="dock-foot">
         <span class="road-no" id="road-no">Road #1</span>
-        <span class="small">Play as many roads as you like</span>
+        <button type="button" class="btn-link" id="open-board">Leaderboard</button>
       </div>
       <p class="credit">Map data © OpenStreetMap contributors, Natural Earth, GeoNames. Clubs from Wikidata. Records from Wikipedia (CC BY-SA).</p>
     </div>
@@ -101,6 +101,22 @@
     <button id="next" class="btn-sign btn-small" type="button">Next question</button>
   </section>
 
+  <!-- Leaderboard -->
+  <section id="board" class="ft card board" hidden aria-labelledby="board-title">
+    <div class="board-head">
+      <h2 class="ft-title" id="board-title">Leaderboard</h2>
+      <button type="button" class="btn-link" id="close-board">Close</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" data-tab="today" id="tab-today">Today</button>
+      <button type="button" role="tab" class="tab" data-tab="all" id="tab-all">All time</button>
+      <button type="button" role="tab" class="tab" data-tab="counties" id="tab-counties">Counties</button>
+    </div>
+    <p class="small" id="board-note"></p>
+    <ol class="board-list" id="board-list"></ol>
+    <p class="small board-foot">Each road is worth up to 700 points: 100 for every All-Star answer. 700 means you reached Croke Park.</p>
+  </section>
+
   <!-- Full time -->
   <section id="fulltime" class="ft card" hidden>
     <p class="eyebrow">Full time · <span id="ft-road">Road #1</span></p>
@@ -108,6 +124,17 @@
     <p class="ft-km" id="ft-km"></p>
     <button id="again" class="btn-sign" type="button">Play again</button>
     <p class="small again-note">A new road with different stops and seven new questions.</p>
+    <div class="ft-board">
+      <form id="name-form" class="name-form" autocomplete="off">
+        <label for="player-name">Your name on the leaderboard</label>
+        <div class="name-row">
+          <input id="player-name" maxlength="24" placeholder="e.g. Seán from Castleisland" spellcheck="false">
+          <button type="submit" class="btn-ghost" id="post-road">Post my road</button>
+        </div>
+      </form>
+      <p class="small" id="board-status"></p>
+      <button type="button" class="btn-link" id="ft-open-board">See the leaderboard</button>
+    </div>
     <ol class="ft-list" id="ft-list"></ol>
     <pre class="share" id="share-text"></pre>
     <div class="ft-actions">
@@ -125,6 +152,8 @@
   <script src="js/pois.js?v=20261119"></script>
   <script src="js/route.js?v=20261119"></script>
   <script src="js/map.js?v=20261119"></script>
+  <script src="js/config.js?v=20261119"></script>
+  <script src="js/board.js?v=20261119"></script>
   <script src="js/kick.js?v=20261119"></script>
   <script src="js/game.js?v=20261119"></script>
 </body>

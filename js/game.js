@@ -68,7 +68,7 @@
   const crowdCounts = () => null;
 
   // ---------- Screens ----------
-  const screens = ["intro", "hud", "question", "shotbar", "result", "fulltime"];
+  const screens = ["intro", "hud", "question", "shotbar", "result", "fulltime", "board"];
   function show(...ids) {
     screens.forEach(s => { $(s).hidden = !ids.includes(s); });
     document.querySelector(".fade-top").hidden = ids.includes("fulltime");
@@ -347,6 +347,7 @@
     $("share-text").textContent = shareText();
     $("copy-msg").textContent = "";
     show("fulltime");
+    postRoad();
     if (sideBySide()) frame(null, null, "fulltime"); else frame(null, null);
     RoadMap.frac = frac();
     RoadMap.showOverview(1400);
@@ -369,6 +370,87 @@
 
   $("start").addEventListener("click", () => { if (!home) return; const n = current(); n ? ask(n) : fullTime(); });
   $("again").addEventListener("click", () => { clearInterval(timer); newRound(); });
+
+  // ---------- Leaderboard ----------
+  const Board = window.PuckoutBoard;
+  const roadSummary = () => ({
+    round, points: points(), km: kmDone(), total_km: road.total, club: home.name, county: home.county,
+    marks: todays.map(id => L.tierById(state.answers[id].tier).mark).join("")
+  });
+  async function postRoad() {
+    if (!Board || !road || current()) return;
+    const p = Board.player();
+    $("player-name").value = p.name || "";
+    const status = $("board-status");
+    if (state.posted) { status.textContent = `Posted as ${p.name}.`; $("name-form").hidden = true; return; }
+    try {
+      const r = await Board.submit(roadSummary());
+      if (r.posted) { state.posted = true; save(); }
+      if (r.posted) status.textContent = `Posted as ${p.name}.`;
+      else if (!Board.configured) status.textContent = "Saved on this device. The shared leaderboard isn't switched on yet.";
+      else status.textContent = "Add your name to put this road on the leaderboard.";
+      $("name-form").hidden = !!r.posted;
+    } catch (e) {
+      status.textContent = "Couldn't reach the leaderboard. Your road is saved on this device.";
+    }
+  }
+  $("name-form").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const name = $("player-name").value.trim();
+    if (!name) { $("board-status").textContent = "Type a name first."; return; }
+    Board.setName(name);
+    postRoad();
+  });
+
+  let boardTab = "today", boardBack = "intro";
+  const countyDot = c => {
+    const col = (window.PuckoutKick && window.PuckoutKick.COLOURS[c]) || ["#00693b", "#e6a817"];
+    return `<i class="dot" style="background:linear-gradient(90deg, ${col[0]} 50%, ${col[1]} 50%)"></i>`;
+  };
+  async function openBoard(tab) {
+    boardBack = !$("fulltime").hidden ? "fulltime" : "intro";
+    show("board");
+    frame(null, null);
+    renderBoard(tab || boardTab);
+  }
+  async function renderBoard(tab) {
+    boardTab = tab;
+    document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+    const list = $("board-list"), note = $("board-note");
+    const me = Board.player().id;
+    list.innerHTML = `<li class="board-empty">Loading…</li>`;
+    note.textContent = Board.configured ? "" : "The shared leaderboard isn't switched on yet, so this shows roads played on this device.";
+    try {
+      if (tab === "today" || !Board.configured) {
+        const rows = tab === "today" ? await Board.today() : Board.localRows();
+        list.innerHTML = rows.length ? rows.map((r, i) => `
+          <li class="${r.player_id === me ? "me" : ""}"><span class="rk">${i + 1}</span>
+            <span class="who"><b>${esc(r.name)}</b><small>${countyDot(r.county)}${esc(r.club)}${r.county ? " · " + esc(r.county) : ""}</small></span>
+            <span class="sc"><b>${r.points}</b><small>${r.km} of ${r.total_km} km</small></span></li>`).join("")
+          : `<li class="board-empty">No roads finished yet${tab === "today" ? " today" : ""}. Be the first.</li>`;
+      } else if (tab === "all") {
+        const rows = await Board.allTime();
+        list.innerHTML = rows.length ? rows.map((r, i) => `
+          <li class="${r.player_id === me ? "me" : ""}"><span class="rk">${i + 1}</span>
+            <span class="who"><b>${esc(r.name)}</b><small>${countyDot(r.county)}${esc(r.club)} · ${r.roads} road${r.roads === 1 ? "" : "s"}${r.crokers ? ` · ${r.crokers}× Croke Park` : ""}</small></span>
+            <span class="sc"><b>${r.total_points}</b><small>best ${r.best_points}</small></span></li>`).join("")
+          : `<li class="board-empty">Nobody on the board yet.</li>`;
+      } else {
+        const rows = await Board.counties();
+        list.innerHTML = rows.length ? rows.map((r, i) => `
+          <li><span class="rk">${i + 1}</span>
+            <span class="who"><b>${countyDot(r.county)}${esc(r.county)}</b><small>${r.players} player${r.players === 1 ? "" : "s"} · ${r.roads} roads</small></span>
+            <span class="sc"><b>${r.total_points}</b><small>points</small></span></li>`).join("")
+          : `<li class="board-empty">No counties on the board yet.</li>`;
+      }
+    } catch (e) {
+      list.innerHTML = `<li class="board-empty">Couldn't reach the leaderboard. Check your connection and try again.</li>`;
+    }
+  }
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => renderBoard(b.dataset.tab)));
+  $("open-board").addEventListener("click", () => openBoard("today"));
+  $("ft-open-board").addEventListener("click", () => openBoard("today"));
+  $("close-board").addEventListener("click", () => { if (boardBack === "fulltime") fullTime(); else renderIntro(); });
   $("new-road").addEventListener("click", () => { clearInterval(timer); newRound(); });
 
   // ---------- Boot ----------

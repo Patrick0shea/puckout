@@ -31,7 +31,27 @@ It's a static site with no build step and no dependencies.
 - serve it locally: `npm start`, then visit http://localhost:8080
 - run the tests: `npm test` (Node 18+)
 
-To publish it on GitHub Pages: Settings → Pages → Deploy from a branch → `main` / root.
+### Publishing on GitHub Pages
+
+`.github/workflows/pages.yml` runs the tests and publishes the site on every push to `main`. GitHub needs a one-time switch first:
+
+1. Go to **Settings → Pages**.
+2. Under **Build and deployment → Source**, choose **GitHub Actions**.
+3. Re-run the latest "Deploy to GitHub Pages" run under the **Actions** tab, or push any change.
+
+The game is then live at https://patrick0shea.github.io/puckout/
+
+## Leaderboard
+
+At full time players can put their name on the leaderboard. It has three tables: **Today** (best road per player since midnight, Irish time), **All time** (total points across every road) and **Counties** (points added up by home county). Each road is worth up to 700 points, 100 per All-Star answer, so roads of different lengths compare fairly.
+
+Until a shared database is connected, the leaderboard shows the roads played on that device. To share it between everyone:
+
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In the project's **SQL editor**, run `supabase/schema.sql`. It creates the `roads` table and the two leaderboard views, with rules that let anyone read the board and add a road, but not change or delete one.
+3. In **Project Settings → API**, copy the **Project URL** and the **anon public** key into `js/config.js`, and push.
+
+The anon key is designed to be public. The game runs in the browser, so a determined player could post a fake score; if that becomes a problem, add a server-side check or moderate the `roads` table in Supabase.
 
 ## Project layout
 
@@ -42,6 +62,9 @@ To publish it on GitHub Pages: Settings → Pages → Deploy from a branch → `
 | `js/pois.js` | The places a road can pass: county grounds, legends' clubs and landmarks, each with a one-line postcard |
 | `js/route.js` | Picks each road's stops between your club and Croke Park and smooths a road through them |
 | `js/map.js` | Paints the cartoon map of Ireland from real outlines and moves the camera, signs and pin |
+| `js/board.js` | The leaderboard: posts finished roads, reads Today, All time and Counties |
+| `js/config.js` | Shared leaderboard settings (Supabase URL and public key) |
+| `supabase/schema.sql` | Database table, views and access rules for the leaderboard |
 | `js/kick.js` | The cartoon footballer and hurler and their kick and strike, in each county's colours |
 | `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
 | `data/*.js` | Generated map, club, town and question data (see below) |

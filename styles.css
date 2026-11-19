@@ -340,3 +340,33 @@ body.on-intro .fade-top { height: 250px; background: linear-gradient(to bottom, 
   82% { transform: rotate(-95deg); }
   100% { transform: rotate(-80deg); }
 }
+
+/* ---------- Leaderboard ---------- */
+.ft-board { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(255, 255, 255, .6); }
+.name-form { display: grid; gap: 6px; }
+.name-form label { font-weight: 800; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.name-row { display: flex; gap: 8px; }
+.name-row input { flex: 1; min-width: 0; font-size: 1rem; padding: 9px 12px 7px; border-radius: 10px; border: 2px solid var(--line); background: #fff; color: var(--ink); }
+.name-row input:focus { outline: none; border-color: var(--green); }
+.ft-board .btn-link { justify-self: start; padding-left: 0; }
+.board { gap: 10px; }
+.board-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { font-family: var(--sans); font-weight: 800; font-size: .85rem; letter-spacing: .06em; padding: 7px 12px 5px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: #fff; color: var(--muted); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+.tab:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.board-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.board-list li { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.board-list li.me { background: #fff6dc; border-radius: 8px; }
+.board-list .rk { font-family: var(--serif); font-weight: 800; font-size: 1.15rem; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.board-list li:nth-child(-n+3) .rk { color: var(--allstar); }
+.board-list .who { display: grid; min-width: 0; }
+.board-list .who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-list .who small, .board-list .sc small { font-size: .78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-list .sc { display: grid; text-align: right; font-variant-numeric: tabular-nums; }
+.board-list .sc b { font-family: var(--serif); font-size: 1.2rem; }
+.board-list .board-empty { display: block; color: var(--muted); padding: 14px 6px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+.board-foot { margin: 0; }
+#board-note:empty, #board-status:empty { display: none; }
