@@ -10,15 +10,17 @@
   const W = Math.round(5.5 * KX * K + PAD * 2), H = Math.round(4.2 * K + PAD * 2);
   const proj = (lat, lon) => ({ x: (lon - LON0) * KX * K + PAD, y: (LAT0 - lat) * K + PAD });
 
+  // Matchday palette: the island as a freshly mown pitch, county lines chalked in.
   const COL = {
-    sea: "#a9cbd0", seaLine: "rgba(255,255,255,.45)", surf: "rgba(255,255,255,.55)", shelf: "#bcd8db",
-    land: "#c2d49a", fields: ["#b8cd8b", "#c4d69c", "#adc581", "#c9d9a3", "#bfd293", "#b3c986"], stubble: "#d9d09b",
-    hedge: "rgba(110,140,80,.45)", tints: ["#e9d98a", "#9fc27a", "#d8b77a", "#86b38a", "#c9c27e", "#a8c98b"],
-    border: "#5b7743", lake: "#b7d5d9", lakeEdge: "#8db3b8", river: "#9fc4ca",
-    tree: ["#6f8a3a", "#7d9443", "#5f7a33", "#879b48"], mountain: "#9a8f7a", mountainDark: "#7d7360", snow: "#f4f2ea",
-    county: "rgba(36,58,34,.30)", town: "#2d3a33", brown: "#6e4426", green: "#00693b", bronze: "#8a5a2b",
-    road: "#f4ecd2", roadEdge: "#b9a77a", trail: "#e6a817"
+    sea: "#4f9fd0", seaLine: "rgba(255,255,255,.5)", surf: "rgba(255,255,255,.8)", shelf: "#73b6de",
+    land: "#7fbf55", stripeA: "#86c65b", stripeB: "#77b64f", ink: "#14231b",
+    chalk: "rgba(255,255,255,.92)", lake: "#86c3e4", lakeEdge: "#14231b", river: "#86c3e4",
+    tree: ["#3f8a3a", "#4c973f", "#357a33", "#56a046"], treeEdge: "rgba(20,35,27,.55)",
+    mountain: "#a99b7c", mountainDark: "#86795c", snow: "#ffffff",
+    county: "#ffffff", town: "#14231b", brown: "#6b3c1f", green: "#0b5d2a", bronze: "#7a4a22",
+    road: "#fff8e1", roadEdge: "#14231b", trail: "#f2a900"
   };
+  const DISPLAY = '"Barlow Condensed", "Arial Narrow", sans-serif', BODY = '"Barlow", system-ui, sans-serif';
 
   function rng(seed) {
     let a = seed >>> 0;
@@ -66,8 +68,8 @@
     // Sea, with a shallow shelf and wave marks
     g.fillStyle = COL.sea; g.fillRect(0, 0, W, H);
     g.lineJoin = "round"; g.lineCap = "round";
-    g.strokeStyle = COL.shelf; g.lineWidth = 34; g.stroke(land);
-    g.strokeStyle = COL.surf; g.lineWidth = 12; g.stroke(land);
+    g.strokeStyle = COL.shelf; g.lineWidth = 40; g.stroke(land);
+    g.strokeStyle = COL.surf; g.lineWidth = 14; g.stroke(land);
     g.strokeStyle = COL.seaLine; g.lineWidth = 1.6;
     for (let n = 0; n < 700; n++) {
       const x = rnd() * W, y = rnd() * H;
@@ -75,35 +77,26 @@
       g.beginPath(); g.moveTo(x - 8, y); g.quadraticCurveTo(x - 4, y - 4, x, y); g.quadraticCurveTo(x + 4, y + 4, x + 8, y); g.stroke();
     }
 
-    // Land: patchwork fields, county tints, hedges
+    // Land: mowing stripes across the whole island, county lines in chalk
     g.fillStyle = COL.land; g.fill(land);
     g.save(); g.clip(land);
-    const S = 24, cols = Math.ceil(W / S) + 2, rows = Math.ceil(H / S) + 2, lat = [];
-    for (let i = 0; i < cols; i++) { lat[i] = []; for (let j = 0; j < rows; j++) lat[i][j] = { x: (i - 0.5) * S + (rnd() - 0.5) * 14, y: (j - 0.5) * S + (rnd() - 0.5) * 14 }; }
-    g.lineWidth = 0.8; g.strokeStyle = COL.hedge;
-    for (let i = 0; i < cols - 1; i++) for (let j = 0; j < rows - 1; j++) {
-      const q = [lat[i][j], lat[i + 1][j], lat[i + 1][j + 1], lat[i][j + 1]];
-      g.beginPath(); q.forEach((p, k) => k ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath();
-      g.fillStyle = rnd() < 0.06 ? COL.stubble : pick(COL.fields); g.fill(); g.stroke();
-    }
-    geo.counties.forEach((c, i) => {
-      g.globalAlpha = 0.16; g.fillStyle = COL.tints[(i * 7) % COL.tints.length]; g.fill(ringPath(c.rings)); g.globalAlpha = 1;
-    });
-    // County borders: soft halo then a dashed line
+    const band = 30;
+    g.translate(W / 2, H / 2); g.rotate(-0.5); g.translate(-W, -H);
+    for (let i = 0, x = 0; x < W * 2; i++, x += band) { g.fillStyle = i % 2 ? COL.stripeA : COL.stripeB; g.fillRect(x, 0, band, H * 2); }
+    g.setTransform(R, 0, 0, R, 0, 0);
     geo.counties.forEach(c => {
       const p = ringPath(c.rings);
-      g.setLineDash([]); g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 4; g.stroke(p);
-      g.setLineDash([6, 4]); g.strokeStyle = COL.border; g.lineWidth = 1.6; g.stroke(p);
+      g.strokeStyle = "rgba(20,35,27,.18)"; g.lineWidth = 4.5; g.stroke(p);
+      g.strokeStyle = COL.chalk; g.lineWidth = 2.2; g.stroke(p);
     });
-    g.setLineDash([]);
     g.restore();
-    g.strokeStyle = "#7f9a63"; g.lineWidth = 1.5; g.stroke(land);
+    g.strokeStyle = COL.ink; g.lineWidth = 2.6; g.stroke(land);
 
     // Rivers and loughs
     g.strokeStyle = COL.river; g.lineWidth = 3;
     geo.rivers.forEach(r => { g.beginPath(); r.line.forEach(([lon, la], i) => { const p = proj(la, lon); i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); }); g.stroke(); });
     g.fillStyle = COL.lake; g.fill(lakes);
-    g.strokeStyle = COL.lakeEdge; g.lineWidth = 1.4; g.stroke(lakes);
+    g.strokeStyle = COL.lakeEdge; g.lineWidth = 1.6; g.stroke(lakes);
 
     // Mountains
     mountains.forEach(([la, lo, size]) => {
@@ -113,7 +106,7 @@
         const h = (14 + size * 5) * (k === Math.floor(n / 2) ? 1 : 0.72), w = h * 1.1;
         const x = c.x + (k - (n - 1) / 2) * w * 0.62, y = c.y + (k === Math.floor(n / 2) ? 0 : 3);
         g.fillStyle = "rgba(60,60,40,.18)"; g.beginPath(); g.ellipse(x + 3, y + 2, w * 0.55, 3, 0, 0, Math.PI * 2); g.fill();
-        g.fillStyle = COL.mountain; g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x, y - h); g.lineTo(x + w / 2, y); g.closePath(); g.fill();
+        g.fillStyle = COL.mountain; g.strokeStyle = COL.ink; g.lineWidth = 1.3; g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x, y - h); g.lineTo(x + w / 2, y); g.closePath(); g.fill(); g.stroke();
         g.fillStyle = COL.mountainDark; g.beginPath(); g.moveTo(x, y - h); g.lineTo(x + w / 2, y); g.lineTo(x + w * 0.1, y); g.closePath(); g.fill();
         g.fillStyle = COL.snow; g.beginPath(); g.moveTo(x - w * 0.16, y - h * 0.68); g.lineTo(x, y - h); g.lineTo(x + w * 0.16, y - h * 0.68); g.lineTo(x + w * 0.05, y - h * 0.62); g.lineTo(x - w * 0.04, y - h * 0.7); g.closePath(); g.fill();
       }
@@ -121,14 +114,15 @@
 
     // Trees
     const trees = [];
-    for (let n = 0; n < 5200; n++) {
+    for (let n = 0; n < 2600; n++) {
       const x = rnd() * W, y = rnd() * H;
       if (onLand(x, y)) trees.push({ x, y, r: 2.6 + rnd() * 3.2, c: pick(COL.tree), con: rnd() < 0.15 });
     }
     trees.sort((a, b) => a.y - b.y).forEach(t => {
       g.fillStyle = "rgba(48,66,26,.25)"; g.beginPath(); g.ellipse(t.x + 1.2, t.y + 1.4, t.r, t.r * 0.6, 0, 0, Math.PI * 2); g.fill();
-      if (t.con) { g.fillStyle = "#456341"; g.beginPath(); g.moveTo(t.x, t.y - t.r * 2.2); g.lineTo(t.x + t.r * 0.8, t.y + 1); g.lineTo(t.x - t.r * 0.8, t.y + 1); g.closePath(); g.fill(); }
-      else { g.fillStyle = t.c; g.beginPath(); g.arc(t.x, t.y - t.r * 0.3, t.r, 0, Math.PI * 2); g.fill(); }
+      g.strokeStyle = COL.treeEdge; g.lineWidth = 0.9;
+      if (t.con) { g.fillStyle = "#2f6b33"; g.beginPath(); g.moveTo(t.x, t.y - t.r * 2.2); g.lineTo(t.x + t.r * 0.8, t.y + 1); g.lineTo(t.x - t.r * 0.8, t.y + 1); g.closePath(); g.fill(); g.stroke(); }
+      else { g.fillStyle = t.c; g.beginPath(); g.arc(t.x, t.y - t.r * 0.3, t.r, 0, Math.PI * 2); g.fill(); g.stroke(); }
     });
 
     // County names
@@ -137,10 +131,10 @@
       const big = c.rings.reduce((a, b) => area(b) > area(a) ? b : a);
       const ctr = centroid(big), nudge = LABEL_NUDGE[c.name] || [0, 0];
       const x = ctr.x + nudge[0] * KX * K, y = ctr.y - nudge[1] * K;
-      g.font = `700 21px "Fraunces", Georgia, serif`;
-      g.fillStyle = COL.county;
+      g.font = `800 24px ${DISPLAY}`;
       const text = c.name.toUpperCase().split("").join(" ");
-      g.fillText(text, x, y);
+      g.lineWidth = 4; g.strokeStyle = "rgba(20,35,27,.35)"; g.strokeText(text, x, y);
+      g.fillStyle = "rgba(255,255,255,.85)"; g.fillText(text, x, y);
     });
 
     // Labels placed greedily so they don't collide
@@ -154,7 +148,7 @@
         const b = { x: bx - 2, y: y - h / 2 - 2, w: w + 4, h: h + 4 };
         if (free(b)) {
           boxes.push(b);
-          g.textAlign = align; g.lineWidth = 3; g.strokeStyle = "rgba(246,248,241,.85)"; g.strokeText(text, x + ox, y);
+          g.textAlign = align; g.lineWidth = 3.4; g.strokeStyle = "rgba(255,255,255,.92)"; g.strokeText(text, x + ox, y);
           g.fillStyle = color; g.fillText(text, x + ox, y);
           return true;
         }
@@ -166,7 +160,7 @@
     const ck = proj(croker.lat, croker.lon);
     drawStadium(g, ck.x, ck.y, 26, 19);
     boxes.push({ x: ck.x - 30, y: ck.y - 22, w: 60, h: 44 });
-    label("Croke Park", ck.x, ck.y + 30, `800 13px "Overpass", system-ui, sans-serif`, COL.green, 0);
+    label("Croke Park", ck.x, ck.y + 30, `800 15px ${DISPLAY}`, COL.green, 0);
 
     // Places you can pass
     pois.slice().sort((a, b) => b.lat - a.lat).forEach(p => {
@@ -176,14 +170,14 @@
     });
     pois.forEach(p => {
       const c = proj(p.lat, p.lon);
-      label(p.name, c.x + 4, c.y - 4, `700 10px "Overpass", system-ui, sans-serif`, ["landmark", "roadside", "pub"].includes(p.kind) ? COL.brown : p.kind === "statue" ? COL.bronze : "#1f4d33", 10);
+      label(p.name, c.x + 4, c.y - 4, `700 10.5px ${BODY}`, ["landmark", "roadside", "pub"].includes(p.kind) ? COL.brown : p.kind === "statue" ? COL.bronze : "#1f4d33", 10);
     });
 
     // Towns
     g.textBaseline = "middle";
     geo.towns.slice().sort((a, b) => b.size - a.size).forEach(t => {
       const c = proj(t.lat, t.lon);
-      const font = t.size === 3 ? `800 14px "Overpass", system-ui, sans-serif` : t.size === 2 ? `700 11.5px "Overpass", system-ui, sans-serif` : `600 10px "Overpass", system-ui, sans-serif`;
+      const font = t.size === 3 ? `800 16px ${DISPLAY}` : t.size === 2 ? `700 13px ${DISPLAY}` : `600 10.5px ${BODY}`;
       if (label(t.name, c.x, c.y, font, COL.town, t.size === 3 ? 8 : 6)) {
         g.fillStyle = "#fff"; g.strokeStyle = COL.town; g.lineWidth = 1.5;
         g.beginPath(); g.arc(c.x, c.y, t.size === 3 ? 4 : 2.6, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -386,7 +380,7 @@
 
   // ---------------------------------------------------------- live view
   const M = {
-    ready: false, world: null, road: null, roadXY: [], marksXY: [], signs: [], pinEl: null, ballEl: null, ball: null, popups: [],
+    ready: false, world: null, team: null, road: null, roadXY: [], marksXY: [], signs: [], pinEl: null, ballEl: null, ball: null, popups: [],
     vw: 0, vh: 0, dpr: 1, R: 1, cam: { x: W / 2, y: H / 2, s: 0.3 }, focusX: 0.5, focusY: 0.5, band: null, frac: 0, anim: null,
 
     async init(canvas, marksEl, geo, pois, mountains, croker) {
@@ -396,11 +390,12 @@
       // Paint once the web fonts are in, so labels use them (give up after 2.5 s).
       try {
         await Promise.race([
-          Promise.all([document.fonts.load('700 21px "Fraunces"'), document.fonts.load('700 10px "Overpass"'), document.fonts.load('800 14px "Overpass"')]),
+          Promise.all([document.fonts.load('800 24px "Barlow Condensed"'), document.fonts.load('700 13px "Barlow Condensed"'), document.fonts.load('700 10px "Barlow"'), document.fonts.load('600 10px "Barlow"')]),
           new Promise(r => setTimeout(r, 2500))
         ]);
       } catch (e) { /* fall back to system fonts */ }
       this.world = paint(this.R, geo, pois, mountains, croker);
+      this.geo = geo;
       this.pinEl = document.createElement("div");
       this.pinEl.className = "pin"; this.pinEl.innerHTML = "<i></i>";
       marksEl.appendChild(this.pinEl);
@@ -419,6 +414,13 @@
       this.canvas.style.width = this.vw + "px"; this.canvas.style.height = this.vh + "px";
       this.draw();
     },
+    // Light up the home county in the player's colours; the trail takes them too.
+    setTeam(county, c1, c2) {
+      const c = this.geo && this.geo.counties.find(x => x.name === county);
+      this.team = c ? { path: ringPath(c.rings), c1, c2 } : null;
+      COL.trail = c2 || "#f2a900";
+      this.draw();
+    },
     followScale() { return Math.max(0.6, Math.min(1.15, Math.min(this.vw / 620, this.vh / 800))); },
 
     setRoad(road) {
@@ -431,9 +433,9 @@
         const el = document.createElement("div");
         const last = i === road.marks.length - 1;
         el.className = "sign" + (i === 0 ? " sign-home" : last ? " sign-croker" : " sign-" + m.kind);
-        el.innerHTML = "<b></b><span></span>";
-        el.firstChild.textContent = i === 0 ? m.name : m.name;
-        el.lastChild.textContent = i === 0 ? "Home · 0 km" : last ? `${Math.round(road.total)} km` : `${m.tag} · ${Math.round(m.km)} km`;
+        el.innerHTML = '<div class="pn"><b></b><span></span></div>';
+        el.querySelector("b").textContent = m.name;
+        el.querySelector("span").textContent = i === 0 ? "Home · 0 km" : last ? `${Math.round(road.total)} km` : `${m.tag} · ${Math.round(m.km)} km`;
         this.marksEl.insertBefore(el, this.pinEl);
         return { el, ...proj(m.lat, m.lon) };
       });
@@ -470,6 +472,13 @@
       g.fillStyle = COL.sea; g.fillRect(0, 0, this.vw, this.vh);
       g.imageSmoothingQuality = "high";
       g.drawImage(this.world, ox, oy, W * s, H * s);
+      if (this.team) {
+        g.setTransform(d * s, 0, 0, d * s, d * ox, d * oy);
+        g.globalAlpha = 0.16; g.fillStyle = "#ffffff"; g.fill(this.team.path); g.globalAlpha = 1;
+        g.strokeStyle = this.team.c2; g.lineWidth = Math.max(5, 6 / s); g.stroke(this.team.path);
+        g.setLineDash([12, 8]); g.strokeStyle = this.team.c1; g.lineWidth = Math.max(3, 3.5 / s); g.stroke(this.team.path); g.setLineDash([]);
+        g.setTransform(d, 0, 0, d, 0, 0);
+      }
       if (this.roadXY.length) {
         g.setTransform(d * s, 0, 0, d * s, d * ox, d * oy);
         g.lineCap = "round"; g.lineJoin = "round";
@@ -478,21 +487,21 @@
         const lw = 1 / s;
         g.strokeStyle = COL.roadEdge; g.lineWidth = Math.max(9, 11 * lw); g.stroke(path);
         g.strokeStyle = COL.road; g.lineWidth = Math.max(6.5, 8 * lw); g.stroke(path);
-        g.setLineDash([Math.max(5, 6 * lw), Math.max(6, 8 * lw)]); g.strokeStyle = "rgba(185,167,122,.7)"; g.lineWidth = Math.max(1, 1.2 * lw); g.stroke(path); g.setLineDash([]);
+        g.setLineDash([Math.max(5, 6 * lw), Math.max(6, 8 * lw)]); g.strokeStyle = "rgba(20,35,27,.35)"; g.lineWidth = Math.max(1, 1.2 * lw); g.stroke(path); g.setLineDash([]);
         const end = this.pinKm();
         const trail = new Path2D();
         let started = false;
         for (const p of this.roadXY) { if (p.d > end) break; started ? trail.lineTo(p.x, p.y) : trail.moveTo(p.x, p.y); started = true; }
         const pp = this.pointAtKm(end);
         if (started) trail.lineTo(pp.x, pp.y);
-        g.strokeStyle = "rgba(255,255,255,.8)"; g.lineWidth = Math.max(7, 9 * lw); g.stroke(trail);
+        g.strokeStyle = COL.ink; g.lineWidth = Math.max(8, 10 * lw); g.stroke(trail);
         g.strokeStyle = COL.trail; g.lineWidth = Math.max(4.5, 6 * lw); g.stroke(trail);
         this.pinEl.style.transform = `translate(${ox + pp.x * s}px, ${oy + pp.y * s}px)`;
         this.pinEl.hidden = false;
       } else if (this.pinEl) this.pinEl.hidden = true;
       const far = s < this.followScale() * 0.55;
       this.marksEl.classList.toggle("far", far);
-      this.signs.forEach(sg => { sg.el.style.transform = `translate(${ox + sg.x * s}px, ${oy + sg.y * s - 12}px) translate(-50%, -100%)`; });
+      this.signs.forEach(sg => { sg.el.style.transform = `translate(${ox + sg.x * s}px, ${oy + sg.y * s}px)`; });
       this.popups.forEach(pu => { pu.el.style.transform = `translate(${ox + pu.x * s}px, ${oy + pu.y * s - 54}px) translate(-50%, -100%)`; });
       if (this.ball && this.roadXY.length) {
         const bp = this.pointAtKm(this.pinKm());

@@ -89,9 +89,30 @@
   window.addEventListener("resize", () => frame(...framing));
   const sideBySide = () => window.innerWidth >= 960;
 
+  // ---------- Team colours ----------
+  // The whole game wears the home county's colours: buttons, scoreboard, the
+  // highlighted county on the map and the trail behind the pin.
+  const lum = hex => {
+    const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  function applyTeam(county) {
+    const K = window.PuckoutKick, col = (K && county && K.COLOURS[county]) || ["#14213d", "#f2a900"];
+    let [c1, c2] = col;
+    if (lum(c1) > 0.75 && lum(c2) < 0.75) [c1, c2] = [c2, c1];        // an all-white jersey leads with its trim
+    const r = document.documentElement.style;
+    r.setProperty("--team", c1);
+    r.setProperty("--team-2", c2);
+    r.setProperty("--on-team", lum(c1) > 0.4 ? "#14231b" : "#ffffff");
+    r.setProperty("--on-team-2", lum(c2) > 0.4 ? "#14231b" : "#ffffff");
+    const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = c1;
+    if (RoadMap.ready) RoadMap.setTeam(county, c1, c2);
+  }
+
   // ---------- Home club ----------
   function setHome(h) {
     home = h;
+    applyTeam(h.county);
     store.set(HOME_KEY, h);
     pickQuestions();
     road = R.makeRoad(home, seed());
@@ -164,9 +185,18 @@
   });
 
   // ---------- HUD ----------
+  // Goals and points so far, scoreboard style: 1-07 (10).
+  function score() {
+    let g = 0, p = 0;
+    todays.forEach(id => { const a = state.answers[id]; if (a) { const t = L.tierById(a.tier); g += t.score[0]; p += t.score[1]; } });
+    return { g, p, text: `${g}-${String(p).padStart(2, "0")}`, total: g * 3 + p };
+  }
   function renderHud() {
-    const n = current(), done = kmDone();
+    const n = current(), done = kmDone(), sc = score();
     $("km").textContent = Math.round(done);
+    $("sb-team").textContent = home ? home.name : "Puckout";
+    $("sb-score").textContent = sc.text;
+    $("sb-total").textContent = `(${sc.total})`;
     $("pips").innerHTML = todays.map(id => {
       const a = state.answers[id];
       return `<span class="pip ${a ? a.tier : id === n ? "now" : ""}"></span>`;
@@ -182,7 +212,7 @@
     $("road-no").textContent = `Road #${round}`;
     $("tier-table").innerHTML = D.TIERS.map((t, i) => {
       const range = t.max === Infinity ? `${Math.round(D.TIERS[i - 1].max * 100)}% or more give it` : i === 0 ? `Under ${Math.round(t.max * 100)}% give it` : `${Math.round(D.TIERS[i - 1].max * 100)}–${Math.round(t.max * 100)}%`;
-      return `<tr><td><b>${t.name}</b></td><td class="small">${range}</td><td>${Math.round(t.pts / MAX * 1000) / 10}% of the road</td></tr>`;
+      return `<tr><td><i class="flag-chip ${t.id}"></i><b>${t.call}</b> <span class="small">${t.name}</span></td><td class="small">${range}</td><td>${Math.round(t.pts / MAX * 1000) / 10}% of the road</td></tr>`;
     }).join("");
     const has = !!(home && road);
     $("picker").hidden = has; $("picked").hidden = !has; $("start").hidden = !has; $("road-line").hidden = !has;
@@ -291,7 +321,7 @@
   function showResult(qid, gained, passed) {
     const a = state.answers[qid], q = L.QBY[qid], t = L.tierById(a.tier);
     $("badge").className = "badge " + a.tier;
-    $("badge").textContent = a.entity ? t.name : "Out of time";
+    $("badge").innerHTML = a.entity ? `${t.call}<small>${t.name} answer</small>` : `Wide<small>Out of time</small>`;
     $("gain").textContent = `+${Math.round(gained)} km`;
     $("said").textContent = a.entity
       ? `${pct(a.share)} of correct answers were ${L.EBY[a.entity].label}.`
@@ -338,11 +368,13 @@
     $("ft-road").textContent = `Road #${round}`;
     $("ft-title").textContent = made ? "You made it to Croke Park. All-Ireland final day." :
       m === road.marks[0] ? `You didn't get far past ${home.name} this time.` : `You got as far as ${m.name}.`;
+    const sc = score();
+    $("ft-score").innerHTML = `<span>${esc(home.name)}</span><b>${sc.text}</b><em>(${sc.total})</em>`;
     $("ft-km").innerHTML = `<b>${Math.round(done)}</b> of ${Math.round(road.total)} km from ${esc(home.name)}`;
     $("ft-list").innerHTML = todays.map((id, i) => {
       const a = state.answers[id], t = L.tierById(a.tier);
       const ans = a.entity ? `${L.EBY[a.entity].label} · ${pct(a.share)}` : "Out of time";
-      return `<li><div><div class="q">${i + 1}. ${esc(L.QBY[id].text)}</div><div class="a">${esc(ans)}</div></div><div class="t ${a.tier}">${a.entity ? t.name : "Wide"}</div></li>`;
+      return `<li><div><div class="q">${i + 1}. ${esc(L.QBY[id].text)}</div><div class="a">${esc(ans)}</div></div><div class="t ${a.tier}">${a.entity ? t.call : "Wide"}</div></li>`;
     }).join("");
     $("share-text").textContent = shareText();
     $("copy-msg").textContent = "";
@@ -356,7 +388,8 @@
     const done = Math.round(kmDone()), m = reached();
     const marks = todays.map(id => L.tierById(state.answers[id].tier).mark).join("");
     const where = frac() >= 1 ? "Made it to Croke Park" : m === road.marks[0] ? "Still at the club gate" : `Got as far as ${m.name}`;
-    return `Puckout road #${round} · ${home.name} to Croke Park\n${done} of ${Math.round(road.total)} km · ${where}\n${marks}`;
+    const sc = score();
+    return `Puckout road #${round} · ${home.name} ${sc.text} (${sc.total})\n${done} of ${Math.round(road.total)} km to Croke Park · ${where}\n${marks}`;
   }
   $("copy").addEventListener("click", () => {
     const txt = shareText();
@@ -476,8 +509,10 @@
 
   // ---------- Boot ----------
   if (home) road = R.makeRoad(home, seed());
+  applyTeam(home && home.county);
   renderIntro();
   RoadMap.init($("map"), $("marks"), GEO, POI.POIS, POI.MOUNTAINS, POI.CROKER).then(() => {
+    applyTeam(home && home.county);
     if (road) {
       RoadMap.setRoad(road);
       RoadMap.frac = frac();

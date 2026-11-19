@@ -128,13 +128,15 @@
   // Rarer answers travel further. `pts` is how far along the road (out of
   // CONFIG.maxPoints) the answer carries you. `max` is the upper bound on share.
   const TIERS = [
-    { id: "allstar", name: "All-Star", pts: 100, max: 0.03, mark: "⭐" },
-    { id: "county", name: "Inter-county", pts: 70, max: 0.07, mark: "🟩" },
-    { id: "senior", name: "Senior", pts: 45, max: 0.15, mark: "🟨" },
-    { id: "inter", name: "Intermediate", pts: 25, max: 0.30, mark: "🟧" },
-    { id: "junior", name: "Junior", pts: 10, max: Infinity, mark: "⬜" }
+    // call: what the umpire signals. A goal is worth 3 on the scoreboard, a
+    // two-pointer 2, a point 1 (as in Gaelic football since 2025).
+    { id: "allstar", name: "All-Star", call: "Goal", score: [1, 0], pts: 100, max: 0.03, mark: "🟩" },
+    { id: "county", name: "Inter-county", call: "Two-pointer", score: [0, 2], pts: 70, max: 0.07, mark: "🟧" },
+    { id: "senior", name: "Senior", call: "Point", score: [0, 1], pts: 45, max: 0.15, mark: "⬜" },
+    { id: "inter", name: "Intermediate", call: "Point", score: [0, 1], pts: 25, max: 0.30, mark: "⬜" },
+    { id: "junior", name: "Junior", call: "Point", score: [0, 1], pts: 10, max: Infinity, mark: "⬜" }
   ];
-  const WIDE = { id: "wide", name: "Wide", pts: 0, mark: "❌" };
+  const WIDE = { id: "wide", name: "Wide", call: "Wide", score: [0, 0], pts: 0, mark: "❌" };
 
   const CONFIG = {
     perDay: 7,

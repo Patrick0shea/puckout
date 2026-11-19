@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Puckout</title>
   <meta name="description" content="A daily GAA quiz. Seven questions, rarer answers go further on the road from your club pitch to Croke Park.">
-  <meta name="theme-color" content="#00693b">
+  <meta name="theme-color" content="#14213d">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Overpass:wght@400;600;700;800&display=swap">
-  <link rel="stylesheet" href="styles.css?v=20261120">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Barlow:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css?v=20261121">
 </head>
 <body>
   <canvas id="map" aria-hidden="true"></canvas>
@@ -48,7 +48,7 @@
           <li>Each question has lots of right answers. Name one before the 30-second clock runs out.</li>
           <li>The fewer people who give your answer, the further down the road from your club it takes you. Wrong answers cost nothing, so keep guessing.</li>
           <li>Along the way you pass county grounds, the home clubs of legends and famous sights. Every road has different stops.</li>
-          <li>Seven All-Star answers gets you all the way to Croke Park.</li>
+          <li>The rarest answers are goals (green flag), the next rarest two-pointers (orange flag), and the rest points (white flag). Seven goals gets you all the way to Croke Park.</li>
         </ol>
         <table class="tiers" id="tier-table"></table>
       </details>
@@ -62,7 +62,11 @@
 
   <!-- In play -->
   <header id="hud" class="hud" hidden>
-    <div class="km"><span id="km">0</span><small>km</small></div>
+    <div class="scoreboard" aria-label="Score">
+      <span class="sb-team" id="sb-team">Puckout</span>
+      <span class="sb-score"><b id="sb-score">0-00</b><em id="sb-total">(0)</em></span>
+      <span class="sb-km"><b id="km">0</b> km</span>
+    </div>
     <div class="pips-wrap">
       <div class="pips" id="pips"></div>
       <div class="qcount" id="qcount">Question 1 of 7</div>
@@ -127,6 +131,7 @@
   <!-- Full time -->
   <section id="fulltime" class="ft card" hidden>
     <p class="eyebrow">Full time · <span id="ft-road">Road #1</span></p>
+    <div class="ft-score" id="ft-score"></div>
     <h2 class="ft-title" id="ft-title">You reached the County final</h2>
     <p class="ft-km" id="ft-km"></p>
     <button id="again" class="btn-sign" type="button">Play again</button>
@@ -150,20 +155,20 @@
     </div>
   </section>
 
-  <script src="data/geo.js?v=20261120"></script>
-  <script src="data/clubs.js?v=20261120"></script>
-  <script src="data/places.js?v=20261120"></script>
-  <script src="data/questions.js?v=20261120"></script>
-  <script src="js/data.js?v=20261120"></script>
-  <script src="js/logic.js?v=20261120"></script>
-  <script src="js/pois.js?v=20261120"></script>
-  <script src="js/roads.js?v=20261120"></script>
-  <script src="js/route.js?v=20261120"></script>
-  <script src="js/map.js?v=20261120"></script>
-  <script src="js/config.js?v=20261120"></script>
-  <script src="js/board.js?v=20261120"></script>
-  <script src="js/kick.js?v=20261120"></script>
-  <script src="js/game.js?v=20261120"></script>
-  <script src="js/party.js?v=20261120"></script>
+  <script src="data/geo.js?v=20261121"></script>
+  <script src="data/clubs.js?v=20261121"></script>
+  <script src="data/places.js?v=20261121"></script>
+  <script src="data/questions.js?v=20261121"></script>
+  <script src="js/data.js?v=20261121"></script>
+  <script src="js/logic.js?v=20261121"></script>
+  <script src="js/pois.js?v=20261121"></script>
+  <script src="js/roads.js?v=20261121"></script>
+  <script src="js/route.js?v=20261121"></script>
+  <script src="js/map.js?v=20261121"></script>
+  <script src="js/config.js?v=20261121"></script>
+  <script src="js/board.js?v=20261121"></script>
+  <script src="js/kick.js?v=20261121"></script>
+  <script src="js/game.js?v=20261121"></script>
+  <script src="js/party.js?v=20261121"></script>
 </body>
 </html>

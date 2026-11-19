@@ -302,7 +302,7 @@
         <ul class="p-answers">${rows.map(({ p, r }) => `
           <li><span class="who">${dot(p.county)}<b>${esc(p.name)}</b></span>
             <span class="ans">${r.entity ? esc(r.label) + ` <small>${pct(r.share || 0)}</small>` : "<i>No answer</i>"}</span>
-            <span class="badge ${r.tier}">${r.entity ? esc(L.tierById(r.tier).name) : "Wide"}</span>
+            <span class="badge ${r.tier}">${r.entity ? esc(L.tierById(r.tier).call) : "Wide"}</span>
             <span class="gain">+${r.pts + r.bonus}${r.unique ? `<small class="uniq">only you!</small>` : ""}</span></li>`).join("")}</ul>
         ${raceHTML()}
         ${isHost() ? `<button type="button" class="btn-sign" data-act="next">${S.game.last ? "Final standings" : "Next question"}</button>`

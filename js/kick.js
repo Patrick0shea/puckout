@@ -81,7 +81,8 @@
         <path d="M3.4 9 Q6 5 10 7.5 Q14 10 16.6 6.5 M3.4 13 Q6 9.5 10 12 Q14 14.5 16.6 11" stroke="#8a7a66" stroke-width="1.2" fill="none"/>
       </svg>
     </div></div>
-    <div class="kb-flag">Wide!</div>`;
+    <div class="kb-flag">Wide!</div>
+    <div class="kb-ump"><div class="ump-in"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M6 4 V46" stroke="#5a3d22" stroke-width="2.6" stroke-linecap="round"/><path class="ump-cloth" d="M7 5 Q20 1 34 6 Q30 13 34 20 Q20 15 7 19 Z" stroke="#14231b" stroke-width="1.6" stroke-linejoin="round"/></svg><b></b></div></div>`;
 
   let el = null, timer = null;
   function ensure() {
@@ -120,6 +121,12 @@
     void k.offsetWidth; // restart the animations
     k.className = "kicking k-" + tier + (sport === "hurling" ? " k-hurling" : "");
     k.querySelector(".kb-flag").style.transform = flip ? "scaleX(-1)" : "";
+    // The umpire's flag where the ball lands: green for a goal, orange for a two-pointer, white for a point.
+    const call = { allstar: ["Goal!", "#1f9d4a"], county: ["2 points", "#f28c13"] }[tier] || ["Point", "#ffffff"];
+    const ump = k.querySelector(".kb-ump");
+    ump.style.setProperty("--flag", call[1]);
+    ump.querySelector("b").textContent = call[0];
+    ump.style.transform = flip ? "scaleX(-1)" : "";
     clearTimeout(timer);
     const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     timer = setTimeout(() => { k.className = ""; }, calm ? 1800 : ms + 900);

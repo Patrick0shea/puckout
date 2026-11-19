@@ -13,14 +13,17 @@ A GAA quiz you can play as often as you like. Pick your home club, then answer s
 - Typos are forgiven when the answer is clear: `kery` counts as Kerry and `Co. Tipp` as Tipperary. Nicknames such as `Dubs`, `Cats` and `Deise` work too.
 - **The rarer the answer, the further you go:**
 
-| Tier | Share of correct answers | Distance |
-| --- | --- | --- |
-| All-Star | under 3% | 1/7 of the road |
-| Inter-county | 3–7% | 10% |
-| Senior | 7–15% | 6.4% |
-| Intermediate | 15–30% | 3.6% |
-| Junior | 30% or more | 1.4% |
-| Wide | out of time | 0 |
+| Tier | The umpire's call | Share of correct answers | Distance |
+| --- | --- | --- | --- |
+| All-Star | Goal (green flag) | under 3% | 1/7 of the road |
+| Inter-county | Two-pointer (orange flag) | 3–7% | 10% |
+| Senior | Point (white flag) | 7–15% | 6.4% |
+| Intermediate | Point | 15–30% | 3.6% |
+| Junior | Point | 30% or more | 1.4% |
+| Wide | Wide | out of time | 0 |
+
+- **The scoreboard.** Goals, two-pointers and points add up on a scoreboard at the top of the screen, as in a real match: two goals, a two-pointer and three points reads `2-05 (11)`. Full time and the shareable result show the final score.
+- **Your colours.** Once you pick a club the whole game wears your county's colours: the buttons, the scoreboard, the pennant at your club, your pin and the trail behind it. Your county is chalked out on the map in its colours.
 
 - **Every answer gets a kick.** A cartoon footballer in your home county's colours stands at your pin and kicks the ball (on hurling questions, a hurler in a helmet strikes a sliotar): the rarer the answer, the bigger the kick (an All-Star soars with a gold glow). Wrong guesses go wide.
 - Seven All-Star answers gets you all the way to Croke Park. As you pass each place you get a postcard about it. At full time you see how far you got and a result you can copy and share.
@@ -82,7 +85,7 @@ The anon key is designed to be public. The game runs in the browser, so a determ
 | `tools/build_data.py` | Rebuilds the map, club and town data |
 | `tools/build_roads.py` | Rebuilds `js/roads.js` from a list of road routes (M7, N21 and so on) |
 | `tools/build_questions.py` | Rebuilds `data/questions.js` from GAA records on Wikipedia |
-| `styles.css` | Look and layout |
+| `styles.css` | Look and layout: the "matchday" style (programme-page panels, scoreboard, pennants), coloured by the player's county |
 | `test/` | Logic and route tests (`node --test`) |
 
 ## Where the questions come from
