@@ -44,10 +44,10 @@
       <details class="howto">
         <summary>How to play</summary>
         <ol>
-          <li>Each road has seven GAA questions. Play as many roads as you like.</li>
+          <li>There's one road a day, with the same seven GAA questions for everyone. You get one go, and a new road opens at midnight.</li>
           <li>Each question has lots of right answers. Name one before the 30-second clock runs out.</li>
           <li>The fewer people who give your answer, the further down the road from your club it takes you. Wrong answers cost nothing, so keep guessing.</li>
-          <li>Along the way you pass county grounds, the home clubs of legends and famous sights. Every road has different stops.</li>
+          <li>Along the way you pass county grounds, the home clubs of legends and famous sights on the way to Croke Park from your club.</li>
           <li>The rarest answers are goals (green flag), the next rarest two-pointers (orange flag), and the rest points (white flag). Seven goals gets you all the way to Croke Park.</li>
         </ol>
         <table class="tiers" id="tier-table"></table>
@@ -134,8 +134,8 @@
     <div class="ft-score" id="ft-score"></div>
     <h2 class="ft-title" id="ft-title">You reached the County final</h2>
     <p class="ft-km" id="ft-km"></p>
-    <button id="again" class="btn-sign" type="button">Play again</button>
-    <p class="small again-note">A new road with different stops and seven new questions.</p>
+    <button id="again" class="btn-sign" type="button">See today's leaderboard</button>
+    <p class="small again-note" id="again-note">One road a day.</p>
     <div class="ft-board">
       <form id="name-form" class="name-form" autocomplete="off">
         <label for="player-name">Your name on the leaderboard</label>
@@ -159,6 +159,7 @@
   <script src="data/clubs.js?v=20261121"></script>
   <script src="data/places.js?v=20261121"></script>
   <script src="data/questions.js?v=20261121"></script>
+  <script src="data/daily.js?v=20261121"></script>
   <script src="js/data.js?v=20261121"></script>
   <script src="js/logic.js?v=20261121"></script>
   <script src="js/pois.js?v=20261121"></script>

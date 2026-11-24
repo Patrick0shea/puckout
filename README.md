@@ -1,6 +1,6 @@
 # Puckout
 
-A GAA quiz you can play as often as you like. Pick your home club, then answer seven questions. Every question has lots of right answers, and the fewer people who give yours, the further it carries you along a road across a cartoon map of Ireland, from your club to Croke Park.
+A daily GAA quiz. Pick your home club, then answer the day's seven questions, the same for everyone. Every question has lots of right answers, and the fewer people who give yours, the further it carries you along a road across a cartoon map of Ireland, from your club to Croke Park.
 
 **▶ Play it now: https://patrick0shea.github.io/puckout/**
 
@@ -9,7 +9,7 @@ A GAA quiz you can play as often as you like. Pick your home club, then answer s
 - **Pick your club.** Search more than 700 clubs, or any of about 8,800 towns, villages and parishes if your club isn't listed yet. Your choice is remembered.
 - **The road.** Each road follows Ireland's real main roads from your club to Croke Park, the way you'd actually drive it. From Kerry that's out the N21 past Adare Manor, through Limerick, up the M7 past the Barack Obama Plaza at Moneygall, into Dublin at the Red Cow and in for a pint at the Palace Bar before Croke Park. Every road comes into Dublin past an arrival point (the Red Cow, the Airport, the Phoenix Park or the Aviva) and a pub (the Palace Bar, the Gravediggers or Quinn's). On the way it passes up to six other places within a few kilometres of the road: statues of GAA greats (Christy Ring in Cloyne, Mick O'Dwyer in Waterville, Páidí Ó Sé in Ventry, Mick Mackey in Castleconnell, John Joe O'Reilly in Cavan and more), where the GAA began (Hayes' Hotel, the Croke statue in Thurles, the Michael Cusack Centre), county grounds, the home clubs of legends (Christy Ring's Cloyne, Henry Shefflin's Ballyhale, Peter Canavan's Errigal Ciarán and more) and famous sights (the Rock of Cashel, the Curragh, Kilbeggan Distillery, Knock, Slane Castle, Newgrange). The stops change from road to road. Dublin clubs get a short hop through the city.
 - **The map.** Every place is drawn as a little cartoon on the map: stadiums, statues, castles, pubs, a Luas tram, round towers, racecourses. When you score, a ball (or a sliotar on hurling questions) bounces along the road to your new spot, and each place you pass pops up on the map as you go by.
-- **Seven questions per road.** You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
+- **One road a day.** Everyone gets the same seven questions each day, and you get one go. The next road opens at midnight Irish time. You have 30 seconds per question. Wrong answers cost nothing, so keep guessing until the clock runs out.
 - Typos are forgiven when the answer is clear: `kery` counts as Kerry and `Co. Tipp` as Tipperary. Nicknames such as `Dubs`, `Cats` and `Deise` work too.
 - **The rarer the answer, the further you go:**
 
@@ -27,7 +27,7 @@ A GAA quiz you can play as often as you like. Pick your home club, then answer s
 
 - **Every answer gets a kick.** A cartoon footballer in your home county's colours stands at your pin and kicks the ball (on hurling questions, a hurler in a helmet strikes a sliotar): the rarer the answer, the bigger the kick (an All-Star soars with a gold glow). Wrong guesses go wide.
 - Seven All-Star answers gets you all the way to Croke Park. As you pass each place you get a postcard about it. At full time you see how far you got and a result you can copy and share.
-- **Play again** as often as you like. Each round is a new road with new stops and new questions, and your progress on an unfinished road is kept if you close the page.
+- Your progress on today's road is kept if you close the page. Once you finish, the game shows your result and the leaderboard until the next road opens. Party mode is separate and can be played as often as you like.
 
 ## Running it
 
@@ -81,10 +81,11 @@ The anon key is designed to be public. The game runs in the browser, so a determ
 | `supabase/schema.sql` | Database table, views and access rules for the leaderboard |
 | `js/kick.js` | The cartoon footballer and hurler and their kick and strike, in each county's colours |
 | `js/game.js` | Screens and flow: club search, questions, results, postcards, full time |
-| `data/*.js` | Generated map, club, town and question data (see below) |
+| `data/*.js` | Generated map, club, town and question data (see below), and `data/daily.js`, the hand-picked questions for each day |
 | `tools/build_data.py` | Rebuilds the map, club and town data |
 | `tools/build_roads.py` | Rebuilds `js/roads.js` from a list of road routes (M7, N21 and so on) |
 | `tools/build_questions.py` | Rebuilds `data/questions.js` from GAA records on Wikipedia |
+| `tools/build_daily.py` | Each day's hand-picked questions; writes `data/daily.js` |
 | `styles.css` | Look and layout: the "matchday" style (programme-page panels, scoreboard, pennants), coloured by the player's county |
 | `test/` | Logic and route tests (`node --test`) |
 
@@ -113,6 +114,16 @@ python3 tools/build_questions.py --cache ~/.cache/puckout-wiki
 ```
 
 Discipline stats (red cards, black cards) aren't published in any open source, so there are no questions on them.
+
+## Picking each day's questions
+
+Each day's seven questions are picked by hand in `tools/build_daily.py` (the `DAYS` list), which writes them to `data/daily.js` along with any players and clubs that aren't in the main question data yet. Answer lists are typed in from a named source (GAA.ie for All Stars, match reports for teams) or worked out from Wikipedia, for example every Munster club with an All-Ireland club title or every hurler who scored more than 1-5 in a final:
+
+```bash
+python3 tools/build_daily.py --cache ~/.cache/puckout-wiki-daily
+```
+
+Days with nothing picked draw seven questions from the general pool instead, the same for everyone. `npm test` checks that every scheduled day has seven real questions and that every answer is a known player or club.
 
 ## Adding questions
 

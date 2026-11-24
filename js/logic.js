@@ -14,6 +14,15 @@
   let G = null;
   try { G = node ? (require("../data/questions.js"), globalThis.PuckoutQuestions) : root.PuckoutQuestions; } catch (e) { G = null; }
   G = G || { people: [], clubs: [], questions: [] };
+  // The hand-picked daily questions (data/daily.js): their own extra people,
+  // clubs and questions, and the schedule of which seven run on which day.
+  let DAILY = null;
+  try { DAILY = node ? (require("../data/daily.js"), globalThis.PuckoutDaily) : root.PuckoutDaily; } catch (e) { DAILY = null; }
+  DAILY = DAILY || { people: [], clubs: [], questions: [], schedule: {} };
+  {
+    const have = new Set(G.people.map(p => p.id).concat(G.clubs.map(c => c.id)));
+    G = { ...G, people: G.people.concat(DAILY.people.filter(p => !have.has(p.id))), clubs: G.clubs.concat(DAILY.clubs.filter(c => !have.has(c.id))) };
+  }
 
   const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
     .replace(/\bsaint\b/g, "st").replace(/[^a-z0-9 ]+/g, " ").replace(/\b(county|co|the|gaa|gac|clg)\b/g, " ").replace(/\s+/g, "");
@@ -55,7 +64,11 @@
     if (commaHead !== label) keys.push(norm(commaHead) + norm(label.split(",").slice(1).join("")));
     return { keys, parts: [...parts].filter(p => !keys.includes(p)) };
   };
-  G.people.forEach(p => { const k = personKeys(p.label); ENT.push({ id: p.id, label: p.label, county: p.county, keys: k.keys, parts: k.parts, kind: "person" }); });
+  G.people.forEach(p => {
+    const k = personKeys(p.label);
+    (p.aka || []).forEach(a => { const x = personKeys(a); k.keys.push(...x.keys); k.parts.push(...x.parts); }); // other names they go by
+    ENT.push({ id: p.id, label: p.label, county: p.county, keys: k.keys, parts: k.parts, kind: "person" });
+  });
   G.clubs.forEach(c => { const k = clubKeys(c.label); ENT.push({ id: c.id, label: c.label, county: c.county, keys: k.keys, parts: k.parts, kind: "club" }); });
   const EBY = Object.fromEntries(ENT.map(e => [e.id, e]));
   for (const [nick, [name, county]] of Object.entries(NICKNAMES)) {
@@ -63,7 +76,7 @@
     if (e) e.keys.push(norm(nick));
   }
 
-  const QUESTIONS = D.QUESTIONS.concat(G.questions);
+  const QUESTIONS = D.QUESTIONS.concat(G.questions, DAILY.questions);
   const QBY = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
 
   const INDEX = [];
@@ -109,7 +122,7 @@
   // the queue, so back-to-back rounds don't repeat questions.
   function questionsFor(date, county, seen) {
     const rnd = seeded("puckout:" + date);
-    let pool = QUESTIONS.filter(q => q.cat !== "Your county").map(q => q.id);
+    let pool = QUESTIONS.filter(q => q.cat !== "Your county" && !q.daily).map(q => q.id);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
     if (seen && seen.length) {
       const old = new Set(seen);
@@ -152,6 +165,13 @@
       out.push(from[Math.floor(rnd() * from.length)].id);
     }
     return out;
+  }
+
+  // The day's seven: the hand-picked ones when the day has a schedule,
+  // otherwise a draw from the general pool (the same for everyone).
+  function dailyQuestions(date) {
+    const picked = (DAILY.schedule[date] || []).filter(id => QBY[id]);
+    return picked.length ? picked : questionsFor(date, null);
   }
 
   // ---- Recognising answers ----
@@ -230,7 +250,7 @@
   const tierById = id => D.TIERS.find(t => t.id === id) || D.WIDE;
   const label = id => (EBY[id] ? EBY[id].label : id);
 
-  const api = { QBY, EBY, QUESTIONS, isHurling, irishDate, dayNumber, questionsFor, identify, candidates, shares, tierFor, tierById, norm, seeded, label };
+  const api = { QBY, EBY, QUESTIONS, DAILY, isHurling, irishDate, dayNumber, questionsFor, dailyQuestions, identify, candidates, shares, tierFor, tierById, norm, seeded, label };
   if (node) module.exports = api;
   else root.PuckoutLogic = api;
 })(typeof window !== "undefined" ? window : globalThis);
